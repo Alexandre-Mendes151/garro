@@ -1,0 +1,36 @@
+# OS
+.DS_Store
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor
+.vscode/
+.idea/
+
+# Mobile (Expo/React Native, caso aplicável)
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision

@@ -5,6 +5,8 @@ Cada pelúcia tem tamanho e peso próprios, a garra tem três pontas e pode esco
 Na coleção, as pelúcias capturadas aparecem em 3D e reagem ao toque (carinho, coçar, bravo, barriga pra cima).
 
 ## Jogar
+**Link:** https://alexandre-mendes151.github.io/garro/
+
 Abra `index.html` em qualquer navegador, ou ative o GitHub Pages neste repositório
 (Settings → Pages → Branch: `main` / pasta raiz) e use o link gerado.
 

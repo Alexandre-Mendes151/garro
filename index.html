@@ -511,10 +511,11 @@ function furTex(){if(FUR)return FUR;const c=document.createElement('canvas');c.w
 function M(col,o){o=o||{};const k=col+'|'+JSON.stringify(o);if(MATS[k])return MATS[k];
   const smooth=o.gloss||o.flat||o.glass||o.glow;
   const m=new THREE.MeshStandardMaterial({color:new THREE.Color(col).convertSRGBToLinear(),roughness:o.gloss?.12:o.glass?.2:1,metalness:o.metal||0,
-    map:smooth?null:furTex(),bumpMap:smooth?null:furTex(),bumpScale:o.velvet?.06:.014,flatShading:!!o.flat,
+    flatShading:!!o.flat,
     transparent:!!o.op,opacity:o.op||1,side:o.side?THREE.DoubleSide:THREE.FrontSide,depthWrite:!o.op});
   if(o.glow){m.emissive=new THREE.Color(col).convertSRGBToLinear();m.emissiveIntensity=o.glow}
   m.userData.fur=!smooth&&!o.op;
+  if(!smooth&&!o.side)plushify(m);
   return MATS[k]=m}
 const SHELLS={};const NSHELL=12;const FURTIME={value:0};
 // strand fur: stacked shells; each strand lives in a 3D cell, thins toward the tip, droops and sways
@@ -550,7 +551,20 @@ function wingShape(w,h,bat){const s=new THREE.Shape();s.moveTo(0,0);
 
 /* ---------- sculpted surfaces: smooth-union of ellipsoids meshed with surface nets ---------- */
 const SDFCACHE={};let SDFMAT=null;
-function sdfMat(){if(SDFMAT)return SDFMAT;SDFMAT=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:1,map:furTex(),bumpMap:furTex(),bumpScale:.016});SDFMAT.userData.fur=true;return SDFMAT}
+function sdfMat(){if(SDFMAT)return SDFMAT;SDFMAT=plushify(new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:1}));SDFMAT.userData.fur=true;return SDFMAT}
+// real plush surface: fur / scale detail taken from the Sylvorn and Terranox models, triplanar so it has no seams
+const DETU={uDet:{value:null},uDS:{value:2.4},uStr:{value:1.8}},DETT={};
+const SCALY=[0,8,11,13,15,18];
+function detTex(kind){if(DETT[kind])return DETT[kind];const f='models/tex/'+kind+'.jpg',src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f;
+  const t=new THREE.TextureLoader().load(src);t.wrapS=t.wrapT=THREE.RepeatWrapping;return DETT[kind]=t}
+function setDet(i){const sc=SCALY.includes(i);DETU.uDet.value=detTex(sc?'scale':'fur');DETU.uDS.value=sc?.9:1.15;DETU.uStr.value=sc?1.2:1.3}
+function plushify(m){m.map=null;m.bumpMap=null;
+  m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,DETU);
+    sh.vertexShader='varying vec3 vTP;\nvarying vec3 vON;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vTP=position*vec3(length(modelMatrix[0].xyz),length(modelMatrix[1].xyz),length(modelMatrix[2].xyz));vON=normalize(normal);');
+    sh.fragmentShader='uniform sampler2D uDet;uniform float uDS,uStr;\nvarying vec3 vTP;\nvarying vec3 vON;\n'+sh.fragmentShader
+      .replace('#include <color_fragment>','#include <color_fragment>\n float gDet=.5;{vec3 bw=pow(abs(vON),vec3(4.));bw/=bw.x+bw.y+bw.z;vec3 p=vTP*uDS;gDet=texture2D(uDet,p.yz).r*bw.x+texture2D(uDet,p.xz+.37).r*bw.y+texture2D(uDet,p.xy+.71).r*bw.z;\n diffuseColor.rgb*=clamp(1.+(gDet*2.-1.)*uStr,.72,1.35);}')
+      .replace('#include <normal_fragment_begin>','#include <normal_fragment_begin>\n {vec2 dh=vec2(dFdx(gDet),dFdy(gDet))*uStr*.3;vec3 sx=dFdx(-vViewPosition),sy=dFdy(-vViewPosition);vec3 r1=cross(sy,normal),r2=cross(normal,sx);float fd=dot(sx,r1);normal=normalize(abs(fd)*normal-sign(fd)*(dh.x*r1+dh.y*r2));}')};
+  m.customProgramCacheKey=()=>'pl'+(m.vertexColors?'v':'');return m}
 function vh(x,y,z){let h=(x*374761393+y*668265263+z*1274126177)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295}
 function vnoise(x,y,z){const X=Math.floor(x),Y=Math.floor(y),Z=Math.floor(z),fx=x-X,fy=y-Y,fz=z-Z,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy),w=fz*fz*(3-2*fz);
   const L=(a,b,t)=>a+(b-a)*t;return L(L(L(vh(X,Y,Z),vh(X+1,Y,Z),u),L(vh(X,Y+1,Z),vh(X+1,Y+1,Z),u),v),L(L(vh(X,Y,Z+1),vh(X+1,Y,Z+1),u),L(vh(X,Y+1,Z+1),vh(X+1,Y+1,Z+1),u),v),w)}
@@ -706,11 +720,12 @@ function build(sp){
     case'fluffyBig':end=chain(3,.3,.2,.28,sp.b);end.add(P(ell(sp.a,.12,.12,.14),0,0,-.25));break;
   }
   C.tailBase=tail.rotation.x;
+  C.nB=body.children.length;C.nH=head.children.length;
   // extras
   const top=(t)=>{const z=t*bz*.9;return [0,by*Math.sqrt(Math.max(0,1-(t*.9)**2))*.96,z]};
   const surf=(th,ph,k)=>[bx*Math.cos(ph)*Math.sin(th)*k,by*Math.sin(ph)*k,bz*Math.cos(ph)*Math.cos(th)*k];
   const rnd=(i)=>{const v=Math.sin(i*127.1+sp.b.length*311.7)*43758.5;return v-Math.floor(v)};
-  const dots=(n,col,r,o,minPh)=>{for(let i=0;i<n;i++){const th=rnd(i)*6.28,ph=(minPh||-.2)+rnd(i+50)*(1.4-(minPh||-.2));const m=P(ell(col,r,r*.4,r,o),...surf(th,ph,.94));m.lookAt(0,0,0);body.add(m)}};
+  const dots=(n,col,r,o,minPh)=>{for(let i=0;i<n;i++){const th=rnd(i)*6.28,ph=(minPh||-.2)+rnd(i+50)*(1.4-(minPh||-.2));const m=P(ell(col,r,r*.4,r,o),...surf(th,ph,.94));m.lookAt(0,0,0);m.userData.dot=1;body.add(m)}};
   function flower(col,k){const f=grp();for(let i=0;i<6;i++){const p=ell(col,.12*k,.04*k,.22*k);const a=i/6*Math.PI*2;P(p,Math.cos(a)*.17*k,0,Math.sin(a)*.17*k);p.rotation.y=-a+Math.PI/2;p.rotation.x=.2;f.add(p)}f.add(ell('#ffd23a',.1*k,.07*k,.1*k));return f}
   const wingPair=(make)=>{for(const s of[-1,1]){const g=P(grp(),s*bx*.55,by*.65,sp.bird?0:bz*.15);make(g,s);body.add(g);C.wings.push(g)}};
   const ring=(par,n,cx,cy,cz,Rr,tilt,mk)=>{for(let i=0;i<n;i++){const a=i/n*Math.PI*2,g=P(grp(),cx+Math.cos(a)*Rr,cy+Math.sin(a)*Rr*.95,cz);g.rotation.set(tilt,0,a-Math.PI/2);g.add(mk(i,a));par.add(g)}};
@@ -828,6 +843,11 @@ const MODELS={
   0:{file:'models/terranox.glb',hz:.26,hy:.12,hp:[0,.2,.28],tz:-.18,tp:[0,.16,-.18],spd:.55,wag:.18},
   10:{file:'models/sylvorn.glb',hz:.16,hy:.34,hp:[0,.4,.18],tz:-.3,tp:[0,.32,-.3],spd:1,wag:.35}
 };
+// derived plushes: the Sylvorn mesh without antlers/ears, a painted skin per plush, plus the plush's own parts (ears, wings, fins, tail...)
+const DEER={file:'models/deer_base.glb',hz:.16,hy:.34,hp:[0,.4,.18],tz:-.3,tp:[0,.32,-.3],HC:[0,.355,.33],HR:.135,BC:[0,.25,-.02],BR:[.17,.13,.22],TA:[0,.28,-.2]};
+const DER={2:{spd:1.1,wag:.4,skip:['flameMane']},4:{spd:.9,wag:.3,wing:1},7:{notail:1,spd:1.3,wag:.4,skip:['patch']},
+  9:{notail:1,spd:.9,wag:.3,ts:.8},17:{spd:1.1,wag:.35,wing:1},19:{spd:.9,wag:.35,skip:['maneBig']}};
+for(const k in DER)MODELS[k]=Object.assign({},DEER,DER[k],{skin:'models/skins/'+k+'.jpg',key:'d'+k});
 const GLB={};
 const GLBDATA={};
 function loadGLB(m){if(GLB[m.file])return GLB[m.file];
@@ -841,20 +861,41 @@ function deformMat(mat,m,U){
        vec3 d=transformed-hp;transformed=mix(transformed,hp+rY(uHY)*rX(uHP)*rZ(uHR)*d,hw);
        vec3 tp=vec3(${m.tp.map(v=>v.toFixed(3)).join(',')});float tw=1.-smoothstep(${(m.tz-.12).toFixed(3)},${m.tz.toFixed(3)},transformed.z);
        float far=max(0.,${m.tz.toFixed(3)}-transformed.z);vec3 e=transformed-tp;transformed=mix(transformed,tp+rY(uTail*(.4+far*2.))*e,tw);}`)};
-  mat.customProgramCacheKey=()=>'glb'+m.file;
+  mat.customProgramCacheKey=()=>'glb'+(m.key||m.file);
 }
-async function openGLB(i){
+const SKIN={};
+function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f;
+  new THREE.TextureLoader().load(src,t=>{t.flipY=false;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;res(t)},undefined,()=>res(null))})}
+function dropTail(g,m){const w=g.attributes.uv2;if(!w)return g;g=g.clone();const p=g.attributes.position,B=m.TA;
+  for(let i=0;i<p.count;i++){const k=w.getX(i);if(k<=0)continue;const x=p.getX(i),y=p.getY(i),z=p.getZ(i);p.setXYZ(i,x+(B[0]+(x-B[0])*.1-x)*k,y+(B[1]+(y-B[1])*.1-y)*k,z+(B[2]+(z-B[2])*.1-z)*k)}
+  p.needsUpdate=true;return g}
+// build the procedural plush and move its own parts (ears, horns, wings, fins, tail...) onto the GLB body
+function attachParts(obj,i,m){const sp0=SPEC[i],sp=Object.assign({},sp0,{x:sp0.x.filter(k=>m.only?m.only.includes(k):!(m.skip||[]).includes(k))}),C=build(sp),[bx,by,bz]=sp.s,hr=sp.h;
+  const kH=m.HR/hr,rB=[m.BR[0]/bx,m.BR[1]/by,m.BR[2]/bz],kB=(rB[0]+rB[1]+rB[2])/3;
+  const hpG=new THREE.Group();hpG.position.fromArray(m.hp);hpG.rotation.order='YXZ';obj.add(hpG);
+  const tpG=new THREE.Group();tpG.position.fromArray(m.tp);obj.add(tpG);
+  const bodyG=new THREE.Group();obj.add(bodyG);
+  const hx=C.head.children.slice(C.nH).concat(m.noears?[]:C.ears);
+  for(const o of hx){o.position.multiplyScalar(kH).add(new THREE.Vector3(m.HC[0]-m.hp[0],m.HC[1]-m.hp[1],m.HC[2]-m.hp[2]));o.scale.multiplyScalar(kH);hpG.add(o)}
+  const bx_=C.body.children.slice(C.nB).filter(o=>!o.userData.dot);
+  for(const o of bx_){if(C.wings.includes(o)){o.children=o.children.filter(c=>!(c.geometry&&c.geometry.type==='CylinderGeometry'));o.scale.multiplyScalar(m.ws||1)}o.position.set(m.BC[0]+o.position.x*rB[0],m.BC[1]+o.position.y*rB[1],m.BC[2]+o.position.z*rB[2]);o.scale.multiplyScalar(kB);bodyG.add(o)}
+  if(m.notail){const t=C.tail;t.position.set(m.TA[0]-m.tp[0],m.TA[1]-m.tp[1],m.TA[2]-m.tp[2]);t.scale.multiplyScalar(kB*1.15*(m.ts||1));tpG.add(t)}
+  const wings=(C.wings||[]).map(w=>({w,z:w.rotation.z,s:Math.sign(w.position.x)||1}));
+  return{hpG,tpG,wings,segs:C.segs||[]}}
+async function openGLB(i){setDet(i);
   const m=MODELS[i];if(!initViewer())return false;
   let src;try{src=await loadGLB(m)}catch(e){return false}
   if(V.C)V.spin.remove(V.C.root);if(V.T){V.spin.remove(V.T.root);V.T=null}
   const U={uHY:{value:0},uHP:{value:0},uHR:{value:0},uTail:{value:0},uT:{value:0}};
   const obj=src.clone(true);
-  obj.traverse(o=>{if(o.isMesh){if(!o.geometry.attributes.normal)o.geometry.computeVertexNormals();
-    const mm=o.material.clone();if(mm.map)mm.map.encoding=THREE.sRGBEncoding;mm.roughness=.92;mm.metalness=0;deformMat(mm,m,U);o.material=mm}});
+  const skin=m.skin?await loadSkin(m.skin):null;
+  obj.traverse(o=>{if(o.isMesh){if(m.notail)o.geometry=dropTail(o.geometry,m);if(!o.geometry.attributes.normal)o.geometry.computeVertexNormals();
+    const mm=o.material.clone();if(skin)mm.map=skin;if(mm.map)mm.map.encoding=THREE.sRGBEncoding;mm.roughness=.92;mm.metalness=0;deformMat(mm,m,U);o.material=mm}});
   const box=new THREE.Box3().setFromObject(obj),sz=box.getSize(new THREE.Vector3()),k=2/Math.max(sz.x,sz.y,sz.z);
+  const parts=m.HC?attachParts(obj,i,m):null;
   const roll=new THREE.Group(),root=new THREE.Group();obj.scale.setScalar(k);obj.position.y=-sz.y*k/2;roll.add(obj);roll.position.y=sz.y*k/2;root.add(roll);
   root.position.y=-1;V.spin.add(root);
-  V.C={root,roll,obj,U,m,h:sz.y*k};V.mode='glb';V.sp={};
+  V.C={root,roll,obj,U,m,h:sz.y*k,parts};V.mode='glb';V.sp={};
   V.size={xz:Math.max(sz.x,sz.z)*k,y:sz.y*k};
   Object.assign(V,{ry:-.6,rx:.1,vy:0,st:'idle',until:0,taps:[],t0:performance.now(),wag:0,side:1,
     G:{hy:0,hp:0,hr:0,tail:0,wagA:.2,wagS:4,roll:0,crouch:0,bob:0,shake:0,lift:0}});
@@ -883,6 +924,8 @@ function gloop(now){
   V.wag+=dt*G.wagS;
   C.U.uHY.value=G.hy;C.U.uHP.value=G.hp;C.U.uHR.value=G.hr+(st==='hurt'?Math.sin(t*40)*.04:0);C.U.uTail.value=Math.sin(V.wag)*G.wagA;
   const shk=G.shake*Math.sin(t*28)*.25*(st==='shake'?Math.max(0,1-(el-.45)/1.1):1);
+  if(C.parts){const q=C.parts;q.hpG.rotation.set(C.U.uHP.value,C.U.uHY.value,C.U.uHR.value);q.tpG.rotation.y=C.U.uTail.value*1.1;
+    const fl=C.m.wing?(st==='pet'||st==='scratch'?.5:.18):0;for(const w of q.wings)w.w.rotation.z=w.z+w.s*Math.sin(t*(st==='idle'?3:9)*sp)*fl}
   C.roll.rotation.z=G.roll+shk;C.roll.position.y=C.h/2+(st==='belly'?.05:0)-G.crouch*.06+G.bob*Math.abs(Math.sin(t*7))*.05;
   const br=Math.sin(t*2.2*sp)*.015;C.obj.scale.setScalar(C.obj.scale.x);C.roll.scale.set(1+G.crouch*.04,1+br-G.crouch*.08,1);
   V.ry+=V.vy;V.vy*=.92;V.spin.rotation.y=V.ry;V.spin.rotation.x=V.rx*.6;
@@ -940,6 +983,7 @@ function openViewer(i){
     $('viewer').hidden=false;V.open=true;document.body.style.overflow='hidden';fit();cancelAnimationFrame(V.raf);V.last=performance.now();V.raf=requestAnimationFrame(gloop)}else openProc(i)});return}
   openProc(i)}
 function openProc(i){
+  setDet(i);
   if(!initViewer()){detail(i);return}
   if(V.C){V.spin.remove(V.C.root)}if(V.T){V.spin.remove(V.T.root);V.T=null}V.mode='creature';$('gest').innerHTML=GEST0;
   const sp=SPEC[i],C=build(sp);V.C=C;V.sp=sp;
@@ -1169,9 +1213,7 @@ function tloop(now){
   if(V.open&&V.mode==='terra')V.raf=requestAnimationFrame(tloop);
 }
 
-
+$('t3d').addEventListener('click',()=>{audio();openTerra()});
 renderShelf();hud();
 })();
 </script>
-
-</html>

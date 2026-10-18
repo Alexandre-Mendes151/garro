@@ -81,6 +81,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .foot{display:flex;justify-content:space-between;gap:8px}
 .foot button{background:none;color:var(--dim);font-weight:800;font-size:12px;padding:6px 0}
 @media (prefers-reduced-motion:reduce){.marquee{animation:none}.banner{transition:none}}
+[hidden]{display:none!important}
 /* 3D viewer */
 .viewer{position:fixed;inset:0;z-index:30;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px;overflow:hidden;
   background:radial-gradient(90% 55% at 50% 48%,#4d2443 0%,#1d0f19 70%,#120a10 100%);
@@ -99,8 +100,17 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .fx.love{color:#ff6fa3;text-shadow:0 0 12px rgba(255,111,163,.7)}
 .fx.mad{color:#ff3b3b;font-size:40px}
 @keyframes rise{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}15%{opacity:1;transform:translate(-50%,-60%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-260%) scale(.9)}}
+#attract{position:fixed;inset:0;z-index:50;background:radial-gradient(120% 80% at 50% 35%,#4a1f3e 0%,#1d0d1a 60%,#0d060c 100%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:opacity .5s}
+#attract.out{opacity:0;pointer-events:none}
+#a3d{position:absolute;inset:0;width:100%;height:100%;display:block}
+#attract .att{position:relative;text-align:center;padding:0 16px calc(28px + env(safe-area-inset-bottom))}
+#attract h2{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:clamp(40px,14vw,64px);color:#ffe3ee;text-shadow:0 0 14px #ff4f9a,0 0 32px #ff2a7a;letter-spacing:.04em}
+#attract p{margin:0 0 16px;color:#f2c9dc;font-weight:700;font-size:14px}
+#play{font:inherit;font-family:var(--display);font-size:24px;color:#2a1018;background:linear-gradient(#ffd25a,#ff9a2a);border:0;border-radius:999px;padding:14px 44px;box-shadow:0 6px 0 #b85a10,0 0 26px rgba(255,170,60,.55);cursor:pointer}
+#play:active{transform:translateY(4px);box-shadow:0 2px 0 #b85a10,0 0 26px rgba(255,170,60,.55)}
 </style>
 
+<div id="attract" hidden><canvas id="a3d"></canvas><div class="att"><h2>GARRO</h2><p>20 pelúcias para colecionar</p><button id="play">JOGAR</button></div></div>
 <div class="cab">
   <h1 class="marquee">GARRO</h1>
   <div class="hud">
@@ -322,7 +332,7 @@ function hud(){
   $('drop').disabled=claw.state!=='move';
 }
 function showGrab(p,force,closed){
-  if(!p){$('who').innerHTML='A garra fechou no vazio.';$('mForce').style.width=Math.round(force/12)+'%';$('mWeight').style.width='0';return}
+  if(!p){$('who').innerHTML=closed&&closed.plush?'Pegou só a pontinha de '+closed.plush.name+'.':'A garra fechou no vazio.';$('mForce').style.width=Math.round(force/12)+'%';$('mWeight').style.width='0';return}
   $('who').innerHTML=p.name+' <em>· '+p.cm+' cm · '+p.g+' g'+(closed!==undefined?' · '+closed+'/3 pontas':'')+'</em>';
   $('mForce').style.width=Math.min(100,force/12)+'%';$('mWeight').style.width=Math.min(100,p.g/12)+'%';
 }
@@ -335,7 +345,7 @@ function start(){
   claw.force=losses>=6?1150+Math.random()*150:520+Math.random()*560;
   $('hint').textContent='Posicione e aperte PEGAR';click(500);hud();return true;
 }
-function drop(){if(claw.state!=='move')return;claw.state='down';dir=0;hum(true);$('bar').style.width='0';hud()}
+function drop(){if(claw.state!=='move')return;claw.state='down';claw.press=0;dir=0;hum(true);$('bar').style.width='0';hud()}
 
 function attach(b,hits,mult,closed){mult=mult||1;
   const p=b.plush,dx=Math.abs(b.position.x-claw.x),half=p.dw/2;
@@ -373,8 +383,10 @@ function step(){
   }else if(c.state==='down'){
     c.y+=2.2;
     const pts=[-12,-6,0,6,12].map(o=>({x:c.x+o,y:c.y+6})).concat([tip(-1,c.oL),tip(1,c.oR),{x:c.x,y:c.y+28}]);
-    let hit=c.y>=FLOOR-44;for(const pt of pts)if(pt.y>=FLOOR||Query.point(bodies,pt).length)hit=true;
-    if(hit){c.state='close';c.t=0;hum(false);click(220);beginClose()}
+    // like a real claw it keeps pushing into the soft pile a little before closing, so the prongs sink around the plush
+    let floor=c.y>=FLOOR-44,center=Query.point(bodies,{x:c.x,y:c.y+34}).length>0,side=false;for(const pt of pts)if(pt.y>=FLOOR)floor=true;else if(Query.point(bodies,pt).length)side=true;
+    if(side||center)c.press=(c.press||0)+(center?3.2:2.2);
+    if(floor||c.press>(center?14:22)){c.state='close';c.t=0;c.press=0;hum(false);click(220);beginClose()}
   }else if(c.state==='close'){
     c.t++;
     for(const s of[-1,1]){const k=s<0?'oL':'oR',bk=s<0?'lb':'rb';if(c[bk])continue;
@@ -385,7 +397,7 @@ function step(){
       const closed=(c.lb?0:1)+(c.rb?0:1)+(c.bsnag?0:1),t=c.target;c.snag=closed<3;
       let n=0;if(t)for(let ox=-14;ox<=14;ox+=4)for(let oy=10;oy<=46;oy+=6)if(Query.point([t],{x:c.x+ox,y:c.y+oy}).length)n++;
       if(t&&n>=4)attach(t,n,[0,.12,.5,1][closed],closed);
-      else{showGrab(null,c.force);if(c.snag&&t)banner('Enroscou!','Uma ponta prendeu na vizinha')}
+      else{showGrab(null,c.force,t);if(c.snag&&t)banner('Enroscou!','Uma ponta prendeu na vizinha')}
       c.state='up';hum(true);
     }
   }else if(c.state==='up'){
@@ -845,14 +857,17 @@ const MODELS={
 };
 // derived plushes: the Sylvorn mesh without antlers/ears, a painted skin per plush, plus the plush's own parts (ears, wings, fins, tail...)
 const DEER={file:'models/deer_base.glb',hz:.16,hy:.34,hp:[0,.4,.18],tz:-.3,tp:[0,.32,-.3],HC:[0,.355,.33],HR:.135,BC:[0,.25,-.02],BR:[.17,.13,.22],TA:[0,.28,-.2]};
-const DER={9:{notail:1,spd:.9,wag:.3,ts:.8},17:{spd:1.1,wag:.35,wing:1},19:{spd:.9,wag:.35,skip:['maneBig']}};
+const DER={};
 for(const k in DER)MODELS[k]=Object.assign({},DEER,DER[k],{skin:'models/skins/'+k+'.jpg',key:'d'+k});
 // Tripo models sent by the team; each one is also the base for its "cousins" (same body, repainted skin)
 const NB={draksel:{hz:.26,hy:.22,hp:[0,.26,.22],tz:-.25,tp:[0,.2,-.25]},glacien:{hz:.28,hy:.3,hp:[0,.33,.24],tz:-.2,tp:[0,.3,-.2]},
-  flarion:{hz:.26,hy:.27,hp:[0,.3,.22],tz:-.22,tp:[0,.28,-.22]},magmord:{hz:.28,hy:.26,hp:[0,.28,.24],tz:-.22,tp:[0,.25,-.22]},petrun:{hz:.28,hy:.28,hp:[0,.3,.24],tz:-.25,tp:[0,.3,-.25]}};
+  flarion:{hz:.26,hy:.27,hp:[0,.3,.22],tz:-.22,tp:[0,.28,-.22]},magmord:{hz:.28,hy:.26,hp:[0,.28,.24],tz:-.22,tp:[0,.25,-.22]},petrun:{hz:.28,hy:.28,hp:[0,.3,.24],tz:-.25,tp:[0,.3,-.25]},
+  umbros:{hz:.12,hy:.32,hp:[0,.35,.08],tz:-.2,tp:[0,.2,-.2]},ignovus:{hz:.22,hy:.3,hp:[0,.32,.18],tz:-.25,tp:[0,.2,-.25]},sombril:{hz:.2,hy:.3,hp:[0,.35,.15],tz:-.42,tp:[0,.3,-.42]}};
 for(const [k,b,o] of [[11,'draksel',{spd:.9,wag:.3}],[6,'glacien',{spd:.7,wag:.2}],[2,'flarion',{spd:1.1,wag:.4}],[8,'magmord',{spd:.5,wag:.15}],[13,'petrun',{spd:.4,wag:.12}],
-  [1,'glacien',{spd:1,wag:.3,skin:1}],[3,'glacien',{spd:1,wag:.3,skin:1}],[5,'magmord',{spd:.8,wag:.25,skin:1}],[18,'magmord',{spd:.6,wag:.25,skin:1}],
-  [4,'flarion',{spd:.9,wag:.3,skin:1}],[7,'flarion',{spd:1.3,wag:.4,skin:1}],[15,'petrun',{spd:.5,wag:.15,skin:1}]])
+  [4,'umbros',{spd:.9,wag:.35}],[16,'ignovus',{spd:1,wag:.25}],[14,'sombril',{spd:.6,wag:.15}],
+  [1,'glacien',{spd:1,wag:.3,skin:1}],[3,'ignovus',{spd:1,wag:.3,skin:1}],[5,'magmord',{spd:.8,wag:.25,skin:1}],[18,'magmord',{spd:.6,wag:.25,skin:1}],
+  [7,'flarion',{spd:1.3,wag:.4,skin:1}],[15,'petrun',{spd:.5,wag:.15,skin:1}],[12,'sombril',{spd:.6,wag:.15,skin:1}],
+  [9,'umbros',{spd:.9,wag:.35,skin:1}],[17,'umbros',{spd:1.1,wag:.35,skin:1}],[19,'umbros',{spd:.9,wag:.35,skin:1}]])
   MODELS[k]=Object.assign({file:'models/'+b+'.glb'},NB[b],o,{skin:o.skin?'models/skins/'+k+'.jpg':null,key:b+k});
 const GLB={};
 const GLBDATA={};
@@ -903,7 +918,7 @@ async function openGLB(i){setDet(i);
   const obj=src.clone(true);
   const skin=m.skin?await loadSkin(m.skin):null;
   obj.traverse(o=>{if(o.isMesh){if(m.notail)o.geometry=dropTail(o.geometry,m);if(!o.geometry.attributes.normal)weldNormals(o.geometry);
-    const mm=o.material.clone();if(skin)mm.map=skin;if(mm.map)mm.map.encoding=THREE.sRGBEncoding;mm.roughness=.92;mm.metalness=0;deformMat(mm,m,U);o.material=mm}});
+    const mm=o.material.clone();if(skin)mm.map=skin;if(mm.map)mm.map.encoding=THREE.sRGBEncoding;mm.roughness=.92;mm.metalness=0;deformMat(mm,m,U);o.material=mm;const dm=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});deformMat(dm,m,U);o.customDepthMaterial=dm}});
   const box=new THREE.Box3().setFromObject(obj),sz=box.getSize(new THREE.Vector3()),k=2/Math.max(sz.x,sz.y,sz.z);
   const parts=m.HC?attachParts(obj,i,m):null;
   const roll=new THREE.Group(),root=new THREE.Group();obj.scale.setScalar(k);obj.position.y=-sz.y*k/2;roll.add(obj);roll.position.y=sz.y*k/2;root.add(roll);
@@ -1298,6 +1313,32 @@ function tloop(now){
 }
 
 $('t3d')&&$('t3d').addEventListener('click',()=>{audio();openTerra()});
+/* ---------- attract screen: the real 3D claw machine ---------- */
+(function attract(){const el=$('attract');if(!window.THREE||!THREE.GLTFLoader)return;
+  let R;try{R=new THREE.WebGLRenderer({canvas:$('a3d'),antialias:true,alpha:true})}catch(e){return}
+  el.hidden=false;R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.outputEncoding=THREE.sRGBEncoding;R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;
+  const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(34,1,.05,50);
+  sc.add(new THREE.HemisphereLight(0xfff0f6,0x3a1830,.75));
+  const k=new THREE.DirectionalLight(0xffffff,1.1);k.position.set(1.6,3.2,2.4);k.castShadow=true;k.shadow.mapSize.set(1024,1024);Object.assign(k.shadow.camera,{left:-1.2,right:1.2,top:1.6,bottom:-.4,near:.5,far:8});k.shadow.radius=4;sc.add(k);
+  const pk=new THREE.PointLight(0xff4f9a,1.2,4);pk.position.set(-1,1.2,1);sc.add(pk);const bl=new THREE.PointLight(0x4f8aff,.9,4);bl.position.set(1.1,.6,-.8);sc.add(bl);
+  const ft=floorTex('stars'),fl=new THREE.Mesh(new THREE.CircleGeometry(1.25,64),new THREE.MeshStandardMaterial({map:ft.map,emissiveMap:ft.glow,emissive:0xffffff,emissiveIntensity:.6,transparent:true,roughness:.6}));
+  fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;sc.add(fl);
+  const sh=new THREE.Mesh(new THREE.PlaneGeometry(.75,.75),new THREE.MeshBasicMaterial({map:shadowTex(),transparent:true,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.position.y=.004;sc.add(sh);
+  const spin=new THREE.Group();sc.add(spin);let t0=performance.now(),raf=0,leaving=0,ok=false;
+  const size=()=>{const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()};size();addEventListener('resize',size);
+  loadGLB({file:'models/machine.glb'}).then(src=>{const o=src.clone(true);o.traverse(m=>{if(m.isMesh){if(!m.geometry.attributes.normal)weldNormals(m.geometry);m.castShadow=true;
+      const mm=m.material.clone();if(mm.map)mm.map.encoding=THREE.sRGBEncoding;mm.roughness=.55;mm.metalness=.1;m.material=mm}});
+    const b=new THREE.Box3().setFromObject(o),z=b.getSize(new THREE.Vector3()),s=1.3/z.y;o.scale.setScalar(s);o.position.set(-(b.min.x+z.x/2)*s,0,-(b.min.z+z.z/2)*s);spin.add(o);ok=true}).catch(()=>{});
+  const target=new THREE.Vector3(0,.82,.6);
+  function loop(now){const t=(now-t0)/1000;
+    if(!leaving){spin.rotation.y=Math.sin(t*.35)*.55;const fit=Math.max(1,.62/cam.aspect);cam.position.set(Math.sin(t*.2)*.15,.95,2.9*fit);cam.lookAt(0,.62,0)}
+    else{const u=Math.min(1,(now-leaving)/900);spin.rotation.y*=.88;cam.position.lerp(target,.12);cam.lookAt(0,.78,0);if(u>=1){end();return}}
+    fl.material.emissiveIntensity=.5+Math.sin(t*2)*.15;pk.intensity=1+Math.sin(t*3)*.3;
+    R.render(sc,cam);raf=requestAnimationFrame(loop)}
+  function end(){cancelAnimationFrame(raf);el.classList.add('out');setTimeout(()=>{el.hidden=true;try{R.dispose();R.forceContextLoss&&R.forceContextLoss()}catch(e){}},520)}
+  $('play').addEventListener('click',()=>{audio();if(leaving)return;leaving=performance.now();[392,523,659,784].forEach((f,i)=>setTimeout(()=>tone(f,.12,'triangle',.1),i*80));if(!ok)end()});
+  raf=requestAnimationFrame(loop);
+})();
 renderShelf();hud();
 })();
 </script>

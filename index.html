@@ -592,10 +592,14 @@ $('reset').disabled=true;
 $('reset').title='Em breve: ainda não sincroniza com a conta. Desativado por enquanto.';
 
 async function abrirRanking(){
-  const {data,error}=await sb.from('ranking').select('*').limit(50);
-  if(error)return;
+  const {data,error}=await sb.from('ranking').select('*').order('wins',{ascending:false}).limit(50);
   const ol=$('rankingList');
   ol.innerHTML='';
+  if(error){
+    ol.innerHTML='<li>Não foi possível carregar o ranking agora.</li>';
+    $('rankingPanel').hidden=false;
+    return;
+  }
   (data||[]).forEach(r=>{
     const li=document.createElement('li');
     li.textContent=(r.display_name||'Jogador')+' — '+r.wins+' vitórias · '+r.total_plush+' pelúcias';

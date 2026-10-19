@@ -109,7 +109,53 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 #play{font:inherit;font-family:var(--display);font-size:24px;color:#2a1018;background:linear-gradient(#ffd25a,#ff9a2a);border:0;border-radius:999px;padding:14px 44px;box-shadow:0 6px 0 #b85a10,0 0 26px rgba(255,170,60,.55);cursor:pointer}
 #play:active{transform:translateY(4px);box-shadow:0 2px 0 #b85a10,0 0 26px rgba(255,170,60,.55)}
 </style>
+<style>
+.loginScreen{border-radius:16px;background:#0b0710;padding:26px 20px 24px;
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 26px rgba(0,0,0,.8), 0 0 0 10px #241320, 0 0 0 11px #000;
+  display:flex;flex-direction:column;align-items:center;gap:18px;min-height:360px;position:relative;overflow:hidden}
+.loginScreen .logoMark{width:88px;height:88px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#ff8fb8,var(--neon) 55%,#9c2458 100%);
+  box-shadow:0 0 0 4px #000,0 0 0 7px rgba(255,79,139,.5),0 10px 24px rgba(255,79,139,.35);
+  font-family:var(--display);font-size:34px;color:#1a0712}
+.btnGoogle{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;max-width:280px;padding:13px 18px;border-radius:999px;cursor:pointer;
+  background:#fff;color:#2b2b2b;font-weight:800;font-size:14.5px;font-family:var(--body)}
+.btnGoogle .gicon{width:19px;height:19px;flex:none}
+.spinnerRow{display:flex;align-items:center;gap:10px;color:var(--dim);font-size:13px}
+.spinner{width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(255,255,255,.15);border-top-color:var(--neon);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.errBox{display:flex;flex-direction:column;align-items:center;gap:10px;background:rgba(255,107,107,.1);
+  border:1px solid rgba(255,107,107,.35);border-radius:12px;padding:14px 16px;width:100%;max-width:300px}
+.errBox b{color:var(--err,#ff6b6b);font-size:13px}
+.errBox span{color:var(--dim);font-size:12px;text-align:center;line-height:1.4}
+</style>
 
+<div id="authGate">
+  <h1 class="marquee">GARRO</h1>
+  <p class="tagline">entre pra continuar sua coleção</p>
+  <div class="cab">
+    <div class="loginScreen">
+      <div id="authDefault">
+        <div class="logoMark">G</div>
+        <h2>Bem-vindo de volta</h2>
+        <p class="sub">Entre com sua conta Google pra salvar suas moedas e sua coleção de pelúcias na nuvem.</p>
+        <button class="btnGoogle" id="btnGoogleLogin" type="button">Entrar com Google</button>
+      </div>
+      <div id="authLoading" hidden>
+        <div class="spinnerRow"><span class="spinner"></span> confirmando com o Google</div>
+      </div>
+      <div id="authError" hidden>
+        <div class="errBox">
+          <b>Conexão recusada</b>
+          <span>O Google não confirmou o login. Verifique sua internet e tente de novo.</span>
+        </div>
+        <button class="retry" id="btnRetryLogin" type="button">Tentar novamente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="gameRoot" hidden>
 <div id="attract" hidden><canvas id="a3d"></canvas><div class="att"><h2>GARRO</h2><p>20 pelúcias para colecionar</p><button id="play">JOGAR</button></div></div>
 <div class="cab">
   <h1 class="marquee">GARRO</h1>
@@ -148,6 +194,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
   <div class="vstage"><canvas id="v3d" aria-label="Pelúcia em 3D"></canvas></div>
   <div class="vfoot"><p id="vDesc"></p>
     <div class="gest" id="gest"><span>Arraste: girar</span><span>Toque na cabeça: carinho</span><span>Toque no corpo: coçar</span><span>3 toques rápidos: fica bravo</span><span>Segure: barriga pra cima</span></div></div>
+</div>
 </div>
 
 <script>

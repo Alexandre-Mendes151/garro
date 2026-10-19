@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js" integrity="sha384-OqQP3UcU7efkEYDRjGmQou2uEvzGFGRtwdYXTjnupeB9cWogSgQ4BOhyklFBYbBR" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <style>
 /* Layout: one lit arcade cabinet (marquee, glass window, control deck), then a 20-slot collection shelf. Single dark look. */
 :root{
@@ -231,6 +232,60 @@ const dpr=Math.min(window.devicePixelRatio||1,3);
 cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
 const $=id=>document.getElementById(id);
 
+/* ---------- autenticação e sincronização ---------- */
+const SUPABASE_URL='https://dscxtivmuqavisgxzohr.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzY3h0aXZtdXFhdmlzZ3h6b2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MTU2NTksImV4cCI6MjEwNzk5MTY1OX0.ACAFsFsXp2hjbvysQJ7malmsmuj77NBuByr1t45UH5k';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+function showAuthState(name){
+  ['Default','Loading','Error'].forEach(n=>{$('auth'+n).hidden=n!==name});
+}
+
+async function syncEstado(action,extra){
+  const {data:{session:s}}=await sb.auth.getSession();
+  if(!s)return null;
+  const res=await fetch(SUPABASE_URL+'/functions/v1/sync-estado',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+s.access_token,'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({action},extra||{}))
+  });
+  if(!res.ok)return null;
+  return res.json();
+}
+
+async function carregarEstado(){
+  const {data:ps}=await sb.from('player_state').select('coins,wins').single();
+  const {data:colRows}=await sb.from('collection').select('plush_id,count');
+  coins=ps?ps.coins:15;
+  coll={};
+  (colRows||[]).forEach(r=>{coll[r.plush_id]=r.count});
+}
+
+async function entrarComGoogle(){
+  showAuthState('Loading');
+  const {error}=await sb.auth.signInWithOAuth({provider:'google'});
+  if(error)showAuthState('Error');
+}
+
+async function iniciarAposLogin(){
+  await carregarEstado();
+  $('authGate').hidden=true;
+  $('gameRoot').hidden=false;
+  hud();renderShelf();
+}
+
+sb.auth.onAuthStateChange((event,s)=>{
+  if(s)iniciarAposLogin();
+});
+
+$('btnGoogleLogin').addEventListener('click',entrarComGoogle);
+$('btnRetryLogin').addEventListener('click',()=>showAuthState('Default'));
+
+(async()=>{
+  const {data:{session:s}}=await sb.auth.getSession();
+  if(s)await iniciarAposLogin();
+})();
+
 /* ---------- sprites: bake a soft contact shadow once ---------- */
 PLUSH.forEach(p=>{
   const s=p.cm*PXCM/Math.max(p.w,p.h);p.dw=p.w*s;p.dh=p.h*s;
@@ -388,6 +443,7 @@ function start(){
   if(claw.state!=='ready')return false;
   if(coins<=0){$('hint').textContent='Sem fichas. Toque em +15 fichas abaixo.';banner('Sem fichas');return false}
   coins--;claw.state='move';roundTime=ROUND;roundWin=false;
+  syncEstado('round_start').then(r=>{if(r)coins=r.coins});
   // real machines vary the claw voltage each play; after a losing streak they pay out
   claw.force=losses>=6?1150+Math.random()*150:520+Math.random()*560;
   $('hint').textContent='Posicione e aperte PEGAR';click(500);hud();return true;
@@ -416,7 +472,8 @@ function release(reason){
 function stress(){return claw.held?claw.held.plush.g/claw.hold:0}
 
 function won(b){
-  const p=b.plush;coll[p.i]=(coll[p.i]||0)+1;try{localStorage.setItem('garra-real',JSON.stringify(coll))}catch(e){}
+  const p=b.plush;coll[p.i]=(coll[p.i]||0)+1;
+  syncEstado('capture',{plushId:p.i});
   roundWin=true;losses=0;banner(p.name+'!',p.rare<=2?'Pelúcia rara!':'Caiu no prêmio',true);fanfare();renderShelf(p.i);hud();
 }
 
@@ -516,7 +573,10 @@ addEventListener('keydown',e=>{
   if(e.key===' '||e.key==='ArrowDown'){e.preventDefault();audio();if(claw.state==='ready')start();else drop()}
 });
 addEventListener('keyup',e=>{if(e.key==='ArrowLeft'&&dir<0||e.key==='ArrowRight'&&dir>0)dir=0});
-$('refill').addEventListener('click',()=>{coins+=15;hud();$('hint').textContent='Toque nas setas para jogar'});
+$('refill').addEventListener('click',()=>{
+  syncEstado('refill').then(r=>{if(r){coins=r.coins;hud()}});
+  $('hint').textContent='Toque nas setas para jogar'
+});
 let arm=0;
 $('reset').addEventListener('click',()=>{
   if(!arm){$('reset').textContent='Toque de novo para zerar';arm=setTimeout(()=>{arm=0;$('reset').textContent='Zerar coleção'},2500);return}

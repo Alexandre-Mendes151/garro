@@ -1,10 +1,4 @@
-// supabase/functions/sync-estado/index.ts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-
-const RATE_LIMIT_MS = 1500; // intervalo mínimo entre ações
-const REFILL_COOLDOWN_MS = 20000; // 20s entre refills
-const REFILL_AMOUNT = 15;
-const ROUND_COST = 1;
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -31,43 +25,20 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "bad_request" }), { status: 400 });
   }
 
-  const { data: state, error: stateErr } = await admin
-    .from("player_state")
-    .select("coins, wins, last_action_at")
-    .eq("user_id", userId)
-    .single();
-  if (stateErr || !state) {
-    return new Response(JSON.stringify({ error: "state_not_found" }), { status: 404 });
-  }
-
-  const now = Date.now();
-  const lastAction = state.last_action_at ? new Date(state.last_action_at).getTime() : 0;
-  if (now - lastAction < RATE_LIMIT_MS) {
-    return new Response(JSON.stringify({ error: "too_fast" }), { status: 429 });
-  }
-
   if (body.action === "refill") {
-    if (now - lastAction < REFILL_COOLDOWN_MS) {
-      return new Response(JSON.stringify({ error: "refill_cooldown" }), { status: 429 });
+    const { data, error } = await admin.rpc("rpc_refill", { p_user: userId }).single();
+    if (error || !data) {
+      return new Response(JSON.stringify({ error: "refill_rejected" }), { status: 429 });
     }
-    const newCoins = state.coins + REFILL_AMOUNT;
-    await admin
-      .from("player_state")
-      .update({ coins: newCoins, last_action_at: new Date().toISOString() })
-      .eq("user_id", userId);
-    return new Response(JSON.stringify({ coins: newCoins, wins: state.wins }));
+    return new Response(JSON.stringify({ coins: data.coins, wins: data.wins }));
   }
 
   if (body.action === "round_start") {
-    if (state.coins < ROUND_COST) {
-      return new Response(JSON.stringify({ error: "not_enough_coins" }), { status: 400 });
+    const { data, error } = await admin.rpc("rpc_round_start", { p_user: userId }).single();
+    if (error || !data) {
+      return new Response(JSON.stringify({ error: "round_start_rejected" }), { status: 400 });
     }
-    const newCoins = state.coins - ROUND_COST;
-    await admin
-      .from("player_state")
-      .update({ coins: newCoins, last_action_at: new Date().toISOString() })
-      .eq("user_id", userId);
-    return new Response(JSON.stringify({ coins: newCoins, wins: state.wins }));
+    return new Response(JSON.stringify({ coins: data.coins, wins: data.wins }));
   }
 
   if (body.action === "capture") {
@@ -75,22 +46,11 @@ Deno.serve(async (req) => {
     if (!Number.isInteger(plushId) || plushId < 0 || plushId >= 20) {
       return new Response(JSON.stringify({ error: "bad_plush_id" }), { status: 400 });
     }
-    const newWins = state.wins + 1;
-    await admin
-      .from("player_state")
-      .update({ wins: newWins, last_action_at: new Date().toISOString() })
-      .eq("user_id", userId);
-    const { data: existing } = await admin
-      .from("collection")
-      .select("count")
-      .eq("user_id", userId)
-      .eq("plush_id", plushId)
-      .maybeSingle();
-    const newCount = (existing?.count ?? 0) + 1;
-    await admin
-      .from("collection")
-      .upsert({ user_id: userId, plush_id: plushId, count: newCount });
-    return new Response(JSON.stringify({ coins: state.coins, wins: newWins, plushId, count: newCount }));
+    const { data, error } = await admin.rpc("rpc_capture", { p_user: userId, p_plush_id: plushId }).single();
+    if (error || !data) {
+      return new Response(JSON.stringify({ error: "capture_rejected" }), { status: 400 });
+    }
+    return new Response(JSON.stringify({ coins: data.coins, wins: data.wins, plushId, count: data.count }));
   }
 
   return new Response(JSON.stringify({ error: "unknown_action" }), { status: 400 });

@@ -171,6 +171,11 @@ git push origin main
 
 ### Task 2: Edge Function `sync-estado`
 
+> **Nota (code review):** a implementação real usa as funções SQL atômicas
+> `rpc_round_start`/`rpc_capture`/`rpc_refill` (migration `0002_rpc_atomico.sql`),
+> não o SELECT+UPDATE em JS mostrado abaixo — um review encontrou uma race
+> condition que permitia burlar o rate limit e capturar pelúcia sem round_start pago.
+
 **Files:**
 - Create: `supabase/functions/sync-estado/index.ts`
 

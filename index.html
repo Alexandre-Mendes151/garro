@@ -187,8 +187,14 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
   <h2>Coleção <span id="count">0 de 20</span></h2>
   <div class="grid" id="grid"></div>
   <div class="detail" id="detail" hidden></div>
-  <div class="foot"><button id="refill">+15 fichas</button><button id="reset">Zerar coleção</button></div>
+  <div class="foot"><button id="refill">+15 fichas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
 </section>
+
+<div id="rankingPanel" hidden>
+  <h3>Ranking</h3>
+  <ol id="rankingList"></ol>
+  <button id="rankingClose" type="button">Fechar</button>
+</div>
 
 <div class="viewer" id="viewer" hidden>
   <div class="vhead"><div><h2 id="vName"></h2><p id="vStats"></p></div><button class="vclose" id="vClose" aria-label="Fechar">✕</button></div>
@@ -584,6 +590,21 @@ $('reset').addEventListener('click',()=>{
 });
 $('reset').disabled=true;
 $('reset').title='Em breve: ainda não sincroniza com a conta. Desativado por enquanto.';
+
+async function abrirRanking(){
+  const {data,error}=await sb.from('ranking').select('*').limit(50);
+  if(error)return;
+  const ol=$('rankingList');
+  ol.innerHTML='';
+  (data||[]).forEach(r=>{
+    const li=document.createElement('li');
+    li.textContent=(r.display_name||'Jogador')+' — '+r.wins+' vitórias · '+r.total_plush+' pelúcias';
+    ol.appendChild(li);
+  });
+  $('rankingPanel').hidden=false;
+}
+$('btnRanking').addEventListener('click',abrirRanking);
+$('rankingClose').addEventListener('click',()=>{$('rankingPanel').hidden=true});
 
 /* ---------- collection ---------- */
 function detail(i){

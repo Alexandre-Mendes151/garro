@@ -582,6 +582,8 @@ $('reset').addEventListener('click',()=>{
   if(!arm){$('reset').textContent='Toque de novo para zerar';arm=setTimeout(()=>{arm=0;$('reset').textContent='Zerar coleção'},2500);return}
   clearTimeout(arm);arm=0;$('reset').textContent='Zerar coleção';coll={};try{localStorage.removeItem('garra-real')}catch(e){}$('detail').hidden=true;renderShelf();hud();
 });
+$('reset').disabled=true;
+$('reset').title='Em breve: ainda não sincroniza com a conta. Desativado por enquanto.';
 
 /* ---------- collection ---------- */
 function detail(i){

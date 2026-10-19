@@ -12,7 +12,9 @@ empacotar o jogo como app nativo (iOS/Android) no futuro.
 - **Backend:** Supabase (Auth + Postgres + Edge Functions). Mais previsível em
   custo que Firebase para um jogo que salva estado com frequência (Firestore
   cobra por leitura/escritura; Postgres do Supabase tem teto fixo por plano).
-  CLI do Supabase já é usada no outro projeto do João (`maycloset-platform`).
+  CLI do Supabase já é usada no outro projeto do João (`maycloset-platform`),
+  mas o **garro-app usa um projeto Supabase totalmente separado e isolado**
+  (organização/conta própria) — nunca o mesmo projeto ou banco da loja.
 - **Método de login:** só login social, só Google por enquanto (Apple exige
   conta de desenvolvedor paga e mais configuração — entra quando/se lançarem
   app iOS de verdade).

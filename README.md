@@ -38,3 +38,9 @@ Um único arquivo HTML, sem instalação. Usa Matter.js (física) e Three.js (3D
 - Reações mais claras: ao ficar bravo ele recua, agacha e bufa; carinho faz inclinar e balançar; um aviso no topo mostra o humor.
 - Correções: agachar não faz mais o bicho flutuar; Ignovus/Zephyra estavam de lado e agora olham pra frente; a corrida em círculos não sai mais da tela; área da cabeça certa no Sombril e no Ignovus.
 - Tela da pelúcia: elemento e raridade, setas para passar entre as pelúcias capturadas e “Como brincar” recolhível.
+
+### Rodada 5 (15 bichinhos novos e cuidados)
+- 15 pelúcias redondas da folha nova entraram na máquina e na coleção (ids 20 a 34): Cianim, Tigrel, Folhim, Draquim, Nevim, Trevim, Rosalis, Melzim, Marim, Cinzim, Noctis, Carneli, Brasim, Cobaltin e Zorbi. São montadas em código (sem arquivo .glb), com olhos grandes, orelhas, chifres, marcas e patinhas.
+- Cuidados na tela da pelúcia: **Comida**, **Carinho** e **Brincar** (as voltas em círculo). Cada ação enche uma barra e dá XP; as barras caem com o tempo.
+- Evolução em 3 fases: Filhote (40 XP) → Jovem (110 XP) → Evoluído, que é a forma da folha de referência. Nos 15 novos mudam tamanho, cor e partes (orelhas, chifres, marcas); nos 20 antigos, o tamanho.
+- Pegar uma pelúcia repetida dá +10 XP. O progresso fica salvo no aparelho (`localStorage`, chave `garro-care`).

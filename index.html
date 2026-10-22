@@ -998,17 +998,17 @@ function projectPhoto(C,i,sp){
 /* ---------- real 3D models (GLB from image-to-3D) ---------- */
 // per model: file, head region (z,y thresholds) + neck pivot, tail start + pivot, personality speed
 const MODELS={
-  0:{file:'models/terranox.glb',hc:[0,.21,.38],hr:.12,hp:[0,.17,.27],tz:-.18,tp:[0,.16,-.18],spd:.55,wag:.18},
-  10:{file:'models/sylvorn.glb',hz:.16,hy:.34,hp:[0,.4,.18],tz:-.3,tp:[0,.32,-.3],spd:1,wag:.35}
+  0:{file:'models/terranox.glb',hc:[0,.2,.39],hr:.13,hp:[0,.15,.28],tz:-.18,tp:[0,.16,-.18],spd:.55,wag:.18},
+  10:{file:'models/sylvorn.glb',hc:[0,.42,.36],hr:.14,hp:[0,.36,.24],tz:-.3,tp:[0,.32,-.3],spd:1,wag:.35}
 };
 // derived plushes: the Sylvorn mesh without antlers/ears, a painted skin per plush, plus the plush's own parts (ears, wings, fins, tail...)
 const DEER={file:'models/deer_base.glb',hz:.16,hy:.34,hp:[0,.4,.18],tz:-.3,tp:[0,.32,-.3],HC:[0,.355,.33],HR:.135,BC:[0,.25,-.02],BR:[.17,.13,.22],TA:[0,.28,-.2]};
 const DER={};
 for(const k in DER)MODELS[k]=Object.assign({},DEER,DER[k],{skin:'models/skins/'+k+'.jpg',key:'d'+k});
 // Tripo models sent by the team; each one is also the base for its "cousins" (same body, repainted skin)
-const NB={draksel:{hc:[0,0.3,0.38],hr:0.13,hp:[0,0.261,0.263],tz:-.25,tp:[0,.2,-.25],wing:{x:.05,y:.33,z0:-.18,z1:.18,a:.55}},glacien:{hc:[0,0.34,0.38],hr:0.15,hp:[0,0.295,0.245],tz:-.2,tp:[0,.3,-.2]},
-  flarion:{hc:[0,0.33,0.37],hr:0.14,hp:[0,0.288,0.244],tz:-.22,tp:[0,.28,-.22]},magmord:{hc:[0,0.3,0.38],hr:0.13,hp:[0,0.261,0.263],tz:-.22,tp:[0,.25,-.22]},petrun:{hc:[0,0.3,0.38],hr:0.13,hp:[0,0.261,0.263],tz:-.25,tp:[0,.3,-.25]},
-  umbros:{hc:[0,0.45,0.33],hr:0.18,hp:[0,0.396,0.168],tz:-.2,tp:[0,.2,-.2]},ignovus:{hc:[0,.45,.24],hr:.14,hp:[0,.36,.14],tz:-.12,tp:[0,.15,-.1],wing:{x:.15,y:.22,z0:-.22,z1:.33,a:.5}},sombril:{hc:[0,.35,.33],hr:.17,hp:[0,.3,.2],tz:-.42,tp:[0,.3,-.42]}};
+const NB={draksel:{hc:[0,0.28,0.39],hr:0.14,hp:[0,0.224,0.271],tz:-.25,tp:[0,.2,-.25],wing:{x:.05,y:.33,z0:-.18,z1:.18,a:.55}},glacien:{hc:[0,0.28,0.41],hr:0.16,hp:[0,0.216,0.274],tz:-.2,tp:[0,.3,-.2]},
+  flarion:{hc:[0,0.3,0.38],hr:0.15,hp:[0,0.24,0.253],tz:-.22,tp:[0,.28,-.22]},magmord:{hc:[0,0.28,0.39],hr:0.14,hp:[0,0.224,0.271],tz:-.22,tp:[0,.25,-.22]},petrun:{hc:[0,0.27,0.39],hr:0.14,hp:[0,0.214,0.271],tz:-.25,tp:[0,.3,-.25]},
+  umbros:{hc:[0,0.47,0.33],hr:0.21,hp:[0,0.386,0.152],tz:-.2,tp:[0,.2,-.2]},ignovus:{hc:[0,0.44,0.25],hr:0.15,hp:[0,0.38,0.122],tz:-.12,tp:[0,.15,-.1],tx:.12,wing:{x:.18,y:.35,z0:-.1,z1:.3,a:.45}},sombril:{hc:[0,0.4,0.38],hr:0.15,hp:[0,0.34,0.253],tz:-.9,tp:[0,.3,-.9]}};
 for(const [k,b,o] of [[11,'draksel',{spd:.9,wag:.3}],[6,'glacien',{spd:.7,wag:.2}],[2,'flarion',{spd:1.1,wag:.4}],[8,'magmord',{spd:.5,wag:.15}],[13,'petrun',{spd:.4,wag:.12}],
   [4,'umbros',{spd:.9,wag:.35}],[16,'ignovus',{spd:1,wag:.25}],[14,'sombril',{spd:.6,wag:.15}],
   [1,'glacien',{spd:1,wag:.3,skin:1}],[3,'ignovus',{spd:1,wag:.3,skin:1}],[5,'magmord',{spd:.8,wag:.25,skin:1}],[18,'magmord',{spd:.6,wag:.25,skin:1}],
@@ -1024,10 +1024,10 @@ function deformMat(mat,m,U){
   mat.onBeforeCompile=sh=>{Object.assign(sh.uniforms,U);
     sh.vertexShader='uniform float uHY,uHP,uHR,uTail,uT,uWing;\nmat3 rY(float a){float c=cos(a),s=sin(a);return mat3(c,0.,-s,0.,1.,0.,s,0.,c);}\nmat3 rX(float a){float c=cos(a),s=sin(a);return mat3(1.,0.,0.,0.,c,s,0.,-s,c);}\nmat3 rZ(float a){float c=cos(a),s=sin(a);return mat3(c,s,0.,-s,c,0.,0.,0.,1.);}\n'+
     sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
-      {vec3 hp=vec3(${m.hp.map(v=>v.toFixed(3)).join(',')});float hw=${m.hc?`1.-smoothstep(${(m.hr*.8).toFixed(3)},${(m.hr*1.3).toFixed(3)},length(transformed-vec3(${m.hc.map(v=>v.toFixed(3)).join(',')})))`:`smoothstep(${m.hz.toFixed(3)},${(m.hz+.12).toFixed(3)},transformed.z)*smoothstep(${(m.hy-.1).toFixed(3)},${(m.hy+.04).toFixed(3)},transformed.y)`};
+      {vec3 hp=vec3(${m.hp.map(v=>v.toFixed(3)).join(',')});float hw=${m.hc?`1.-smoothstep(${(m.hr*.85).toFixed(3)},${(m.hr*2.2).toFixed(3)},length(transformed-vec3(${m.hc.map(v=>v.toFixed(3)).join(',')})))`:`smoothstep(${(m.hz-.04).toFixed(3)},${(m.hz+.18).toFixed(3)},transformed.z)*smoothstep(${(m.hy-.18).toFixed(3)},${(m.hy+.04).toFixed(3)},transformed.y)`};
        vec3 d=transformed-hp;transformed=mix(transformed,hp+rY(uHY)*rX(uHP)*rZ(uHR)*d,hw);
-       vec3 tp=vec3(${m.tp.map(v=>v.toFixed(3)).join(',')});float tw=1.-smoothstep(${(m.tz-.12).toFixed(3)},${m.tz.toFixed(3)},transformed.z);
-       float far=max(0.,${m.tz.toFixed(3)}-transformed.z);vec3 e=transformed-tp;transformed=mix(transformed,tp+rY(uTail*(.4+far*2.))*e,tw);${m.wing?`{const float wx=${m.wing.x.toFixed(3)},wy=${m.wing.y.toFixed(3)};float ww=smoothstep(wx,wx+.06,abs(transformed.x))*smoothstep(wy,wy+.05,transformed.y)*smoothstep(${(m.wing.z0-.05).toFixed(3)},${m.wing.z0.toFixed(3)},transformed.z)*(1.-smoothstep(${m.wing.z1.toFixed(3)},${(m.wing.z1+.05).toFixed(3)},transformed.z))*(1.-hw);
+       vec3 tp=vec3(${m.tp.map(v=>v.toFixed(3)).join(',')});float tw=(1.-smoothstep(${(m.tz-.12).toFixed(3)},${m.tz.toFixed(3)},transformed.z))*(1.-smoothstep(${(m.tx||.6).toFixed(3)},${((m.tx||.6)+.1).toFixed(3)},abs(transformed.x)));
+       float far=max(0.,${m.tz.toFixed(3)}-transformed.z);vec3 e=transformed-tp;transformed=mix(transformed,tp+rY(uTail*(.4+far*2.))*e,tw);${m.wing?`{const float wx=${m.wing.x.toFixed(3)},wy=${m.wing.y.toFixed(3)};float ww=smoothstep(wx,wx+.14,abs(transformed.x))*smoothstep(wy,wy+.1,transformed.y)*smoothstep(${(m.wing.z0-.1).toFixed(3)},${m.wing.z0.toFixed(3)},transformed.z)*(1.-smoothstep(${m.wing.z1.toFixed(3)},${(m.wing.z1+.1).toFixed(3)},transformed.z))*(1.-hw);
        float sx=sign(transformed.x);vec3 wp=vec3(sx*wx,wy,transformed.z);transformed=wp+rZ(sx*uWing*ww)*(transformed-wp);}`:''}}`)};
   mat.customProgramCacheKey=()=>'glb'+(m.key||m.file);
 }
@@ -1092,24 +1092,24 @@ function gloop(now){
     V.act=acts[Math.random()*acts.length|0];V.actT=t;V.actSide=Math.random()<.5?-1:1;V.nextIdle=t+4.5+Math.random()*4}
   const st=V.st,el=t-(V.stT||0),toCam=Math.max(-.7,Math.min(.7,-V.ry));
   const ae=t-(V.actT||-99),act=st==='idle'&&ae<2.6?V.act:null,ap=act?Math.sin(Math.min(1,ae/2.6)*Math.PI):0;
-  const X={hy:Math.sin(t*.5*sp)*.2+Math.sin(t*1.3*sp)*.04,hp:Math.sin(t*.7*sp)*.05,hr:0,wagA:m.wag,wagS:3.5*sp,roll:0,crouch:0,bob:0,shake:0,lean:0,pitch:0,back:0,hop:0,wing:.05,wingS:2.4};
-  if(act==='look')Object.assign(X,{hy:V.actSide*.45*ap,hp:-.1*ap,hr:V.actSide*.08*ap});
-  if(act==='sniff')Object.assign(X,{hp:.35*ap,hy:Math.sin(t*7)*.1*ap,pitch:.07*ap});
+  const X={byaw:0,hy:Math.sin(t*.5*sp)*.14+Math.sin(t*1.3*sp)*.03,hp:Math.sin(t*.7*sp)*.05,hr:0,wagA:m.wag,wagS:3.5*sp,roll:0,crouch:0,bob:0,shake:0,lean:0,pitch:0,back:0,hop:0,wing:.05,wingS:2.4};
+  if(act==='look')Object.assign(X,{hy:V.actSide*.3*ap,hp:-.08*ap,hr:V.actSide*.06*ap,byaw:V.actSide*.3*ap});
+  if(act==='sniff')Object.assign(X,{hp:.28*ap,hy:Math.sin(t*7)*.1*ap,pitch:.07*ap});
   if(act==='hop')Object.assign(X,{hop:ap,wagA:m.wag*2,wagS:9*sp,wing:.3});
   if(act==='stretch')Object.assign(X,{crouch:.85*ap,pitch:.1*ap,hp:-.25*ap});
   if(act==='sit')Object.assign(X,{pitch:-.13*ap,crouch:.35*ap,hp:-.1*ap});
-  if(act==='wag')Object.assign(X,{wagA:m.wag*2.6,wagS:11*sp,hy:toCam*.4*ap});
+  if(act==='wag')Object.assign(X,{wagA:m.wag*2.6,wagS:11*sp,hy:toCam*.25*ap,byaw:toCam*.25*ap});
   if(act==='flap')Object.assign(X,{wing:.6*ap,wingS:9,hp:-.1*ap});
-  if(st==='pet')Object.assign(X,{hy:toCam*.4,hp:.1,hr:.18*V.side,wagA:m.wag*2.4,wagS:12*sp,bob:1,lean:V.side*.1,wing:.3,wingS:8});
-  if(st==='scratch')Object.assign(X,{hy:.2,hp:-.15,hr:.15,wagA:m.wag*2,wagS:11*sp,shake:.3,lean:-.08,bob:.6,wing:.2,wingS:10});
-  if(st==='tail')Object.assign(X,{hy:(V.ry>0?-1:1)*.5,wagA:m.wag*2.8,wagS:10*sp,lean:(V.ry>0?-1:1)*.06});
-  if(st==='hurt'){Object.assign(X,{hy:Math.max(-.6,Math.min(.6,-toCam*.6+.3)),hp:.25,hr:0,wagA:0,crouch:.9,back:el<.3?.2:.12,wing:0});if(el<.3)X.hy=toCam;
+  if(st==='pet')Object.assign(X,{hy:toCam*.28,hp:.08,hr:.12*V.side,byaw:toCam*.3,wagA:m.wag*2.4,wagS:12*sp,bob:1,lean:V.side*.1,wing:.3,wingS:8});
+  if(st==='scratch')Object.assign(X,{hy:.15,hp:-.12,hr:.1,wagA:m.wag*2,wagS:11*sp,shake:.3,lean:-.08,bob:.6,wing:.2,wingS:10});
+  if(st==='tail')Object.assign(X,{hy:(V.ry>0?-1:1)*.32,byaw:(V.ry>0?-1:1)*.35,wagA:m.wag*2.8,wagS:10*sp,lean:(V.ry>0?-1:1)*.06});
+  if(st==='hurt'){Object.assign(X,{hy:Math.max(-.35,Math.min(.35,-toCam*.4+.2)),byaw:Math.max(-.45,Math.min(.45,-toCam*.5+.25)),hp:.2,hr:0,wagA:0,crouch:.9,back:el<.3?.2:.12,wing:0});if(el<.3){X.hy=toCam*.3;X.byaw=0}
     if(el>1.5)Object.assign(X,{hr:Math.sin(t*9)*.12,crouch:.5})}
-  if(st==='belly')Object.assign(X,{hy:.2,hp:-.15,hr:.12,wagA:m.wag*2,wagS:8,roll:Math.PI,wing:.25,wingS:7});
+  if(st==='belly')Object.assign(X,{hy:.12,hp:-.1,hr:.08,wagA:m.wag*2,wagS:8,roll:Math.PI,wing:.25,wingS:7});
   if(st==='shake'&&el>.45)X.shake=1;
   if(st==='run')Object.assign(X,{hy:0,hp:-.12,hr:0,wagA:m.wag*2.6,wagS:16,wing:.55,wingS:13});
   const k=Math.min(1,dt*6*sp),kr=Math.min(1,dt*(st==='run'?7:2.5*sp)),kf=Math.min(1,dt*9);
-  for(const n of['hy','hp','hr','wagA','wagS','crouch','bob','shake','lean','pitch','wing','wingS'])G[n]=(G[n]||0)+(X[n]-(G[n]||0))*k;
+  for(const n of['hy','hp','hr','wagA','wagS','crouch','bob','shake','lean','pitch','wing','wingS','byaw'])G[n]=(G[n]||0)+(X[n]-(G[n]||0))*k;
   G.back=(G.back||0)+(X.back-(G.back||0))*kf;G.hop=(G.hop||0)+(X.hop-(G.hop||0))*kf;G.roll+=(X.roll-G.roll)*kr;
   V.wag+=dt*G.wagS;V.wph=(V.wph||0)+dt*G.wingS;
   C.U.uHY.value=G.hy;C.U.uHP.value=G.hp;C.U.uHR.value=G.hr+(st==='hurt'&&el<1?Math.sin(t*40)*.04:0);C.U.uTail.value=Math.sin(V.wag)*G.wagA;
@@ -1120,7 +1120,7 @@ function gloop(now){
   // squash keeps the feet on the floor (scale is taken around the middle of the body)
   const br=Math.sin(t*2.2*sp)*.015,sy=1+br-G.crouch*.1;
   C.roll.scale.set(1+G.crouch*.05,sy,1+G.crouch*.03);
-  C.roll.rotation.z=G.roll+shk+G.lean*(1-G.roll/Math.PI);C.roll.rotation.x=G.pitch;
+  C.roll.rotation.z=G.roll+shk+G.lean*(1-G.roll/Math.PI);C.roll.rotation.x=G.pitch;C.roll.rotation.y=G.byaw*(1-G.roll/Math.PI);
   const hopY=act==='hop'?Math.abs(Math.sin(ae*Math.PI*1.6))*.16*G.hop:0;
   C.roll.position.y=C.h/2*sy+(st==='belly'?.04:0)+G.bob*Math.abs(Math.sin(t*7))*.05+hopY+Math.abs(G.pitch)*C.h*.25;
   V.ry+=V.vy;V.vy*=.92;V.spin.rotation.y=V.ry;V.spin.rotation.x=V.rx*.6;

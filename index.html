@@ -998,7 +998,7 @@ function projectPhoto(C,i,sp){
 /* ---------- real 3D models (GLB from image-to-3D) ---------- */
 // per model: file, head region (z,y thresholds) + neck pivot, tail start + pivot, personality speed
 const MODELS={
-  0:{file:'models/terranox.glb',hc:[0,.2,.39],hr:.13,hp:[0,.15,.28],tz:-.18,tp:[0,.16,-.18],spd:.55,wag:.18},
+  0:{file:'models/terranox.glb',skin:'models/skins/0.jpg',key:'terra0',hc:[0,.2,.39],hr:.13,hp:[0,.15,.28],tz:-.18,tp:[0,.16,-.18],spd:.55,wag:.18},
   10:{file:'models/sylvorn.glb',hc:[0,.42,.36],hr:.14,hp:[0,.36,.24],tz:-.3,tp:[0,.32,-.3],spd:1,wag:.35}
 };
 // derived plushes: the Sylvorn mesh without antlers/ears, a painted skin per plush, plus the plush's own parts (ears, wings, fins, tail...)
@@ -1014,7 +1014,7 @@ for(const [k,b,o] of [[11,'draksel',{spd:.9,wag:.3}],[6,'glacien',{spd:.7,wag:.2
   [1,'glacien',{spd:1,wag:.3,skin:1}],[3,'ignovus',{spd:1,wag:.3,skin:1}],[5,'magmord',{spd:.8,wag:.25,skin:1}],[18,'magmord',{spd:.6,wag:.25,skin:1}],
   [7,'flarion',{spd:1.3,wag:.4,skin:1}],[15,'petrun',{spd:.5,wag:.15,skin:1}],[12,'sombril',{spd:.6,wag:.15,skin:1}],
   [9,'umbros',{spd:.9,wag:.35,skin:1}],[17,'umbros',{spd:1.1,wag:.35,skin:1}],[19,'umbros',{spd:.9,wag:.35,skin:1}]])
-  MODELS[k]=Object.assign({file:'models/'+b+'.glb'},NB[b],o,{skin:o.skin?'models/skins/'+k+'.jpg':null,key:b+k});
+  MODELS[k]=Object.assign({file:'models/'+b+'.glb'},NB[b],o,{skin:(k==14||k==16)?null:'models/skins/'+k+'.jpg',key:b+k});
 const GLB={};
 const GLBDATA={};
 function loadGLB(m){if(GLB[m.file])return GLB[m.file];

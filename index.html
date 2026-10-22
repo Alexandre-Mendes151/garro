@@ -111,6 +111,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .cline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:13px;color:#ffe3ee}
 .cline b{font-family:var(--display);font-weight:400;font-size:17px;color:#ffd25a}.cline span{font-size:12px;color:var(--dim)}
 .cxp{height:7px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}.cxp i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd25a,#ff9a2a);transition:width .5s}
+.sell{background:linear-gradient(90deg,#ffd25a,#ff9a2a);color:#3a2000;margin-top:8px;width:100%;display:block;text-align:center;padding:11px 8px}.sell:disabled{opacity:.6;background:rgba(255,255,255,.1);color:#ffe3a0}.sell[hidden]{display:none}
 .cbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .cb{font:inherit;font-weight:800;font-size:13px;color:#fff;background:rgba(255,255,255,.1);border-radius:14px;padding:9px 6px 8px;display:grid;gap:6px;touch-action:manipulation;cursor:pointer}
 .cb em{display:block;height:6px;border-radius:9px;background:rgba(0,0,0,.4);overflow:hidden}.cb em i{display:block;height:100%;width:0;background:#7cf09a;transition:width .5s}
@@ -187,7 +188,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 <div class="cab">
   <h1 class="marquee">GARRO</h1>
   <div class="hud">
-    <div class="chip"><span>Fichas</span><b id="coins">15</b></div>
+    <div class="chip"><span>Moedas</span><b id="coins">15</b></div>
     <div class="chip"><span>Tempo</span><b id="time">--</b></div>
     <div class="chip"><span>Prêmios</span><b id="wins">0</b></div>
   </div>
@@ -206,14 +207,14 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
     <button class="arrow" id="right" aria-label="Mover garra para a direita">▶</button>
     <button class="drop" id="drop">PEGAR</button>
   </div>
-  <p class="hint" id="hint">Toque nas setas para colocar uma ficha</p>
+  <p class="hint" id="hint">Toque nas setas para colocar uma moeda</p>
 </div>
 
 <section class="shelf">
   <h2>Coleção <span id="count">0 de 35</span></h2>
   <div class="grid" id="grid"></div>
   <div class="detail" id="detail" hidden></div>
-  <div class="foot"><button id="refill">+15 fichas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
+  <div class="foot"><button id="refill">+15 moedas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
 </section>
 
 <div id="rankingPanel" hidden>
@@ -228,7 +229,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
     <button class="vnav prev" id="vPrev" aria-label="Pelúcia anterior">‹</button><button class="vnav next" id="vNext" aria-label="Próxima pelúcia">›</button>
     <div class="vmood" id="vMood" aria-live="polite"></div><div class="vflash" id="vFlash"></div><div class="vevo" id="vEvo"></div></div>
   <div class="vfoot"><div class="care" id="care"><div class="cline"><b id="cStage"></b><span id="cXp"></span></div><div class="cxp"><i id="cXpBar"></i></div>
-    <div class="cbtns"><button class="cb" id="cFeed"><span>🍓 Comida</span><em><i id="mF"></i></em></button><button class="cb" id="cPet"><span>🤍 Carinho</span><em><i id="mL"></i></em></button><button class="cb" id="cPlay"><span>🎾 Brincar</span><em><i id="mP"></i></em></button></div></div><p class="vstats" id="vStats"></p><p id="vDesc"></p><button class="vhelp" id="vHelp" aria-expanded="false">Como brincar <b>▾</b></button>
+    <div class="cbtns"><button class="cb" id="cFeed"><span>🍓 Comida</span><em><i id="mF"></i></em></button><button class="cb" id="cPet"><span>🤍 Carinho</span><em><i id="mL"></i></em></button><button class="cb" id="cPlay"><span>🎾 Brincar</span><em><i id="mP"></i></em></button></div><button class="cb sell" id="cSell" hidden></button></div><p class="vstats" id="vStats"></p><p id="vDesc"></p><button class="vhelp" id="vHelp" aria-expanded="false">Como brincar <b>▾</b></button>
     <div class="gest" id="gest" hidden><span>Arraste: girar</span><span>Toque na cabeça: carinho</span><span>Toque no corpo: coçar</span><span>3 toques rápidos: fica bravo</span><span>Segure: barriga pra cima</span></div></div>
 </div>
 </div>
@@ -315,9 +316,10 @@ async function syncEstado(action,extra){
 async function carregarEstado(){
   const {data:ps}=await sb.from('player_state').select('coins,wins').single();
   const {data:colRows}=await sb.from('collection').select('plush_id,count');
-  coins=ps?ps.coins:15;
+  coins=(ps?ps.coins:15)+bonus;
   coll={};
   (colRows||[]).forEach(r=>{coll[r.plush_id]=r.count});
+  for(const k in XCOLL)coll[k]=Math.max(coll[k]||0,XCOLL[k]);
 }
 
 async function entrarComGoogle(){
@@ -485,6 +487,11 @@ let coins=15,dir=0,roundTime=0,losses=0,roundWin=false;
 const ROUND=25*60;
 let coll={};try{coll=JSON.parse(localStorage.getItem('garra-real')||'{}')||{}}catch(e){coll={}}
 const totalWins=()=>Object.values(coll).reduce((a,b)=>a+b,0);
+// coleção também guardada no aparelho (junta com a do servidor pelo maior valor) e moedas ganhas na venda
+const XKEY='garro-coll';let XCOLL={};try{XCOLL=JSON.parse(localStorage.getItem(XKEY)||'{}')||{}}catch(e){XCOLL={}}
+function saveX(){try{localStorage.setItem(XKEY,JSON.stringify(coll));localStorage.setItem('garra-real',JSON.stringify(coll))}catch(e){}}
+let bonus=0;try{bonus=+localStorage.getItem('garro-bonus')||0}catch(e){}
+function saveBonus(){try{localStorage.setItem('garro-bonus',String(bonus))}catch(e){}}
 
 let bannerT=0;
 function banner(t,sub,win){const b=$('banner');b.innerHTML=t+(sub?'<small>'+sub+'</small>':'');b.className='banner show'+(win?' win':'');clearTimeout(bannerT);bannerT=setTimeout(()=>b.className='banner',2200)}
@@ -501,9 +508,10 @@ function showGrab(p,force,closed){
 
 function start(){
   if(claw.state!=='ready')return false;
-  if(coins<=0){$('hint').textContent='Sem fichas. Toque em +15 fichas abaixo.';banner('Sem fichas');return false}
+  if(coins<=0){$('hint').textContent='Sem moedas. Toque em +15 moedas abaixo.';banner('Sem moedas');return false}
+  const useBonus=bonus>0&&coins-bonus<=0;
   coins--;claw.state='move';roundTime=ROUND;roundWin=false;
-  syncEstado('round_start').then(r=>{if(r)coins=r.coins});
+  if(useBonus){bonus--;saveBonus()}else syncEstado('round_start').then(r=>{if(r)coins=r.coins+bonus});
   // real machines vary the claw voltage each play; after a losing streak they pay out
   claw.force=losses>=6?1150+Math.random()*150:520+Math.random()*560;
   $('hint').textContent='Posicione e aperte PEGAR';click(500);hud();return true;
@@ -532,9 +540,9 @@ function release(reason){
 function stress(){return claw.held?claw.held.plush.g/claw.hold:0}
 
 function won(b){
-  const p=b.plush;coll[p.i]=(coll[p.i]||0)+1;const dup=coll[p.i]>1,evo=p.i<CH0;if(dup&&evo){const c0=careOf(p.i);c0.xp+=20;saveCare()}
+  const p=b.plush;coll[p.i]=(coll[p.i]||0)+1;saveX();const dup=coll[p.i]>1,evo=p.i<CH0;if(dup&&evo){const c0=careOf(p.i);c0.xp+=20;saveCare()}
   syncEstado('capture',{plushId:p.i});
-  roundWin=true;losses=0;banner(p.name+'!',dup?(evo?'Repetida! +20 XP pra evoluir':'Repetida!'):p.rare<=2?'Pelúcia rara!':'Caiu no prêmio',true);fanfare();renderShelf(p.i);hud();
+  roundWin=true;losses=0;banner(p.name+'!',dup?(evo?'Repetida! +20 XP pra evoluir':'Repetida! 2 iguais = 1 moeda'):p.rare<=2?'Pelúcia rara!':'Caiu no prêmio',true);fanfare();renderShelf(p.i);hud();
 }
 
 function step(){
@@ -583,7 +591,7 @@ function step(){
     if(c.t===22&&c.held)release();
     if(c.t>110){
       c.state='ready';if(!roundWin){losses++;if(!$('banner').classList.contains('show'))banner('Não foi dessa vez')}
-      $('hint').textContent=coins>0?'Toque nas setas para jogar de novo':'Acabaram as fichas';
+      $('hint').textContent=coins>0?'Toque nas setas para jogar de novo':'Acabaram as moedas';
       if(bodies.length<13)fill(PILE-bodies.length,-60);
       hud();
     }
@@ -634,7 +642,7 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>{if(e.key==='ArrowLeft'&&dir<0||e.key==='ArrowRight'&&dir>0)dir=0});
 $('refill').addEventListener('click',()=>{
-  syncEstado('refill').then(r=>{if(r){coins=r.coins;hud()}});
+  syncEstado('refill').then(r=>{if(r){coins=r.coins+bonus;hud()}});
   $('hint').textContent='Toque nas setas para jogar'
 });
 let arm=0;
@@ -1687,14 +1695,26 @@ function careStage(i){return i>=CH0?2:careXp(i)>=EVO_XP?1:0}
 function gsOf(i,st){return i>=CH0?1:GROW[st].gs}
 function refreshVStats(i){const p=PLUSH[i],st=careStage(i);$('vStats').textContent=Math.round(p.cm*gsOf(i,st))+' cm · '+p.g+' g · pego '+(coll[i]||0)+'x'+(i>=CH0?'':' · '+(st?'Evoluído':'Base'));if(i<CH0)$('vName').textContent=evName(i,st)}
 function renderCare(){
-  if(!V.open||V.cur===undefined)return;const i=V.cur;$('care').style.display=i>=CH0?'none':'';if(i>=CH0)return;
+  if(!V.open||V.cur===undefined)return;const i=V.cur;$('cXpBar').parentNode.style.display=i>=CH0?'none':'';renderSell(i);
+  if(i>=CH0){const c=careOf(i),m=(c.f+c.l+c.p)/3;$('cStage').textContent=m>60?'😊 Feliz':m>30?'🙂 Tranquilo':'😟 Carente';$('cXp').textContent='Pego '+(coll[i]||0)+'x · 2 repetidas = 1 moeda';
+    for(const [k,id,b] of [['f','mF','cFeed'],['l','mL','cPet'],['p','mP','cPlay']]){$(id).style.width=Math.round(c[k])+'%';$(b).classList.toggle('low',c[k]<25)}return}
   const c=careOf(i),st=careStage(i),n=PLUSH[i].name;
   $('cStage').textContent=st?'★ '+evName(i,1):n;
   $('cXp').textContent=st?'Forma evoluída! '+Math.round(c.xp)+' XP':Math.round(c.xp)+' / '+EVO_XP+' XP · evolui para '+evName(i,1);
   $('cXpBar').style.width=(st?100:Math.min(100,c.xp/EVO_XP*100))+'%';
   for(const [k,id,b] of [['f','mF','cFeed'],['l','mL','cPet'],['p','mP','cPlay']]){$(id).style.width=Math.round(c[k])+'%';$(b).classList.toggle('low',c[k]<25)}
 }
-function careGain(i,kind,amount){if(i>=CH0)return false;const c=careOf(i);if(c[kind]>=96)return false;
+function renderSell(i){const b=$('cSell');if(!b)return;if(i<CH0){b.hidden=true;return}const n=coll[i]||0,q=Math.floor((n-1)/2)*2;b.hidden=false;b.disabled=q<2;
+  b.textContent=q>=2?'💰 Vender '+q+' repetidas · +'+q/2+' moeda'+(q>2?'s':''):'💰 Repetidas valem moeda: 2 = 1 (tenho '+n+')'}
+async function sellDup(){const i=V.cur;if(i===undefined||i<CH0)return;const n=coll[i]||0,q=Math.floor((n-1)/2)*2;if(q<2)return;const gain=q/2,b=$('cSell');b.disabled=true;
+  const r=await syncEstado('sell',{plushId:i,qty:q});
+  if(r&&typeof r.coins==='number'){coins=r.coins+bonus;coll[i]=Math.max(1,r.count||n-q)}else{coll[i]=n-q;bonus+=gain;coins+=gain;saveBonus()}
+  saveX();audio();[784,988,1319,1568].forEach((f,k)=>setTimeout(()=>tone(f,.12,'triangle',.09),k*80));
+  for(let k=0;k<6;k++)setTimeout(()=>float('🪙','love'),k*100);banner('+'+gain+' moeda'+(gain>1?'s':''),'Vendeu '+q+' '+PLUSH[i].name,true);
+  hud();renderShelf();renderSell(i);if(V.open)refreshVStats(i)}
+$('cSell').addEventListener('click',sellDup);
+function careGain(i,kind,amount){if(i>=CH0){const c=careOf(i);if(c[kind]>=96)return false;c[kind]=Math.min(100,c[kind]+amount);c.t=Date.now();saveCare();if(V.open&&V.cur===i){float('+💗','xp');renderCare()}return true}
+  const c=careOf(i);if(c[kind]>=96)return false;
   const before=careStage(i);c[kind]=Math.min(100,c[kind]+amount);c.xp+=XPG[kind];c.t=Date.now();saveCare();
   const after=careStage(i);if(V.open&&V.cur===i){float('+'+XPG[kind]+' XP','xp');renderCare()}
   if(after>before)setTimeout(()=>evolve(i,before,after),900);return true}

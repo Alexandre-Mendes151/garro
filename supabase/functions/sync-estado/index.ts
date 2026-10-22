@@ -43,12 +43,25 @@ Deno.serve(async (req) => {
 
   if (body.action === "capture") {
     const plushId = Number(body.plushId);
-    if (!Number.isInteger(plushId) || plushId < 0 || plushId >= 20) {
+    if (!Number.isInteger(plushId) || plushId < 0 || plushId >= 43) {
       return new Response(JSON.stringify({ error: "bad_plush_id" }), { status: 400 });
     }
     const { data, error } = await admin.rpc("rpc_capture", { p_user: userId, p_plush_id: plushId }).single();
     if (error || !data) {
       return new Response(JSON.stringify({ error: "capture_rejected" }), { status: 400 });
+    }
+    return new Response(JSON.stringify({ coins: data.coins, wins: data.wins, plushId, count: data.count }));
+  }
+
+  if (body.action === "sell") {
+    const plushId = Number(body.plushId);
+    const qty = Number(body.qty);
+    if (!Number.isInteger(plushId) || plushId < 20 || plushId >= 43 || !Number.isInteger(qty) || qty < 2 || qty % 2 !== 0) {
+      return new Response(JSON.stringify({ error: "bad_sale" }), { status: 400 });
+    }
+    const { data, error } = await admin.rpc("rpc_sell", { p_user: userId, p_plush_id: plushId, p_qty: qty }).single();
+    if (error || !data) {
+      return new Response(JSON.stringify({ error: "sale_rejected" }), { status: 400 });
     }
     return new Response(JSON.stringify({ coins: data.coins, wins: data.wins, plushId, count: data.count }));
   }

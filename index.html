@@ -1232,8 +1232,8 @@ function fit(){
   const cvs=$('v3d'),w=cvs.clientWidth,h=cvs.clientHeight;if(!w||!h)return;
   V.renderer.setSize(w,h,false);V.cam.aspect=w/h;V.cam.updateProjectionMatrix();
   const visH=2*6*Math.tan(18*Math.PI/180),visW=visH*V.cam.aspect;
-  const k=Math.min(visW*.88/V.size.xz,visH*.66/V.size.y);V.spin.scale.setScalar(k);
-  const ground=-k*V.size.y/2-.15;V.spin.position.y=ground+k;V.k=k;V.ground=ground;V.floorR=Math.min(visW*.5,V.size.xz*k*1.15);
+  const k=Math.min(visW*.7/V.size.xz,visH*.5/V.size.y,visW*.62/Math.max(V.size.y,1e-3));V.spin.scale.setScalar(k);
+  const ground=-k*V.size.y/2-.15;V.spin.position.y=ground+k;V.k=k;V.ground=ground;V.floorR=Math.min(visW*.5,visH*.42,V.size.xz*k*1.15);
   V.shadow.position.y=ground+.01;V.shadow.scale.set(V.size.xz*k*1.1,V.size.xz*k*.8,1);
 }
 const GEST0='<span>Arraste: girar</span><span>Toque na cabeça: carinho</span><span>Toque no corpo: coçar</span><span>3 toques rápidos: fica bravo</span><span>Segure: barriga pra cima</span><span>Deslize pra cima nele: corre em círculos</span>';

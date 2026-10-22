@@ -1151,8 +1151,8 @@ async function openGLB(i){setDet(i);
   root.position.y=-1;V.spin.add(root);
   setFloor(i);castAll(root);
   V.C={root,roll,obj,U,m,h:sz.y*k,parts};V.mode='glb';V.chibi=false;V.sp={};
-  {const st=careStage(i);V.C.gs=GROW[st].gs;root.scale.setScalar(V.C.gs);killAura();if(st)makeAura(i)}
-  V.size={xz:Math.max(sz.x,sz.z)*k,y:sz.y*k};
+  {const st=careStage(i);V.C.gs=GROW[st].gs;root.scale.setScalar(V.C.gs);killAura()}
+  V.size={xz:Math.max(sz.x,sz.z)*k,y:sz.y*k};if(careStage(i))makeAura(i);
   Object.assign(V,{ry:-.6,rx:.1,vy:0,st:'idle',until:0,taps:[],t0:performance.now(),wag:0,side:1,
     G:{hy:0,hp:0,hr:0,tail:0,wagA:.2,wagS:4,roll:0,crouch:0,bob:0,shake:0,lift:0}});
   return true;
@@ -1794,12 +1794,12 @@ function evolve(i,from,to){
   [523,659,784,1046,1318,1568,2093].forEach((q,k)=>setTimeout(()=>tone(q,.24,'triangle',.11),k*100));
   for(let k=0;k<10;k++)setTimeout(()=>float(['✨','⭐','💖','🌟'][k%4],'love'),k*110);
   setTimeout(()=>{
-    const C=V.C;if(C){C.gs=GROW[to].gs;V.pop=performance.now();makeAura(i)}
+    if(PROC[i]){openFox(i,true)}else{const C=V.C;if(C){C.gs=GROW[to].gs;V.pop=performance.now();makeAura(i)}}
     V.last=performance.now();refreshVStats(i);renderCare();if(V.open)fit()},380)}
 /* evoluídos: brilho na cor do elemento + faíscas girando + anel no chão */
-function killAura(){if(V.aura){V.spin.remove(V.aura.g);V.aura=null}
+function killAura(){V.evoK=0;if(V.evoG){if(V.evoG.parent)V.evoG.parent.remove(V.evoG);V.evoG=null;V.evoW=null}if(V.aura){V.spin.remove(V.aura.g);V.aura=null}
   if(V.C&&(V.C.obj||V.C.root))(V.C.obj||V.C.root).traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive&&!o.userData.keep&&o.material.emissiveIntensity!==undefined&&o.userData.tint){o.material.emissive.setRGB(0,0,0);o.material.emissiveIntensity=0;o.userData.tint=0}})}
-function makeAura(i){killAura();const C=V.C;if(!C||!(C.obj||C.root))return;const col=new THREE.Color(ECOL[ELEM[i]]||'#ffd23c');
+function makeAura(i){killAura();const C=V.C;if(!C||!(C.obj||C.root))return;if(C.obj)makeEvo(i);const col=new THREE.Color(ECOL[ELEM[i]]||'#ffd23c');
   (C.obj||C.root).traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive&&!o.userData.keep){o.material.emissive.copy(col);o.material.emissiveIntensity=.1;o.userData.tint=1}});
   const g=new THREE.Group(),R0=Math.max(V.size.xz*.62,.7),sp=[];
   const mat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
@@ -1807,7 +1807,7 @@ function makeAura(i){killAura();const C=V.C;if(!C||!(C.obj||C.root))return;const
   const ring=new THREE.Mesh(new THREE.RingGeometry(R0*1.02,R0*1.16,64),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=-.985;g.add(ring);
   const ring2=new THREE.Mesh(new THREE.RingGeometry(R0*.7,R0*.74,64),ring.material);ring2.rotation.x=-Math.PI/2;ring2.position.y=-.98;g.add(ring2);
   V.spin.add(g);V.aura={g,sp,ring,ring2,H:V.size.y*1.25}}
-function tickAura(t){const A=V.aura;if(!A)return;const u=t||performance.now()/1000;
+function tickAura(t){const A=V.aura;if(!A)return;const u=t||performance.now()/1000;if(V.evoW)for(const w of V.evoW)w.g.rotation.z=-w.s*(.08+.1*Math.sin(u*2.2));
   for(const q of A.sp){q.h=(q.h+q.v*.004)%1;q.a+=q.s*.012;q.m.position.set(Math.cos(q.a)*q.r,-1+q.h*A.H,Math.sin(q.a)*q.r);q.m.rotation.y+=.05;q.m.scale.setScalar(Math.sin(q.h*Math.PI)*1.3+.1)}
   A.ring.material.opacity=.4+.2*Math.sin(u*3);A.ring2.rotation.z=u*.6;A.ring.scale.setScalar(1+.03*Math.sin(u*3))}
 function setPale(C,pale){if(!C||!C.obj)return;C.obj.traverse(o=>{if(o.isMesh&&!o.userData.keep&&o.material&&o.material.emissive){o.material.emissive.setRGB(.6,.55,.5);o.material.emissiveIntensity=pale*.9}})}
@@ -1963,7 +1963,7 @@ function flameLeaf(len,wid,c0,c1,bend,seed){
   FLM=FLM||new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,metalness:0,side:THREE.DoubleSide});
   return new THREE.Mesh(g,FLM)}
 function leafAt(parent,pos,dir,len,wid,c0,c1,bend,roll){const m=flameLeaf(len,wid,c0,c1,bend);m.position.set(pos[0],pos[1],pos[2]);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(dir[0],dir[1],dir[2]).normalize());m.rotateY(roll||0);parent.add(m);return m}
-function buildFox(stage){
+function buildFox(evo){
   if(!SPH)SPH=new THREE.SphereGeometry(1,30,22);
   const F=FOXC,body=grp(),root=grp(),C={root,body,ears:[],legs:[],eyes:[],lids:[],brows:[],segs:[],wings:[],smoke:[]};root.add(body);
   // corpo: tronco baixo e fofo, peito largo, manchas escuras nos flancos
@@ -2027,12 +2027,15 @@ function buildFox(stage){
   for(let q=0;q<28;q++){const t=.15+q/27*.85,py=.05+t*.85,pz=-.3-Math.sin(t*2.3)*.28,side=(q%3-1);
     leafAt(tail,[side*.07,py,pz],[side*.55,.6+t*.5,-.25+t*.45],.62+t*.28,.28,q%3?'#e4501a':'#c8391a',q%2?'#ffc23a':'#ffa52e',.14,q)}
   leafAt(tail,[0,.8,-.35],[0,1,.15],.8,.3,'#f06a22','#ffd04a',.1,0);
+  if(evo){// Flarion Inferno: asas de chamas, juba maior e brilho
+    for(const s of[-1,1]){const w=P(grp(),s*.14,.2,-.02);body.add(w);for(let k=0;k<9;k++){const t=k/8,a=(-10+t*95)*Math.PI/180;leafAt(w,[0,0,0],[s*Math.cos(a),Math.sin(a),-.35-.3*t],.95-.25*Math.abs(t-.3),.2,t<.5?'#e4501a':'#f06a22',t<.5?'#ffb02e':'#ffd64a',.18,0)}C.wings.push(w)}
+    for(let q=0;q<10;q++){const x=(q%5-2)*.14;leafAt(body,[x,.25,.1-Math.floor(q/5)*.2],[x*1.3,.6,-.8],.8,.22,'#f06a22','#ffd04a',.15,q)}}
   head.position.set(0,.27,.4);head.scale.setScalar(1.3);C.lidOpen=-1.95;C.baseY=0;C.mouth=[0,-.12,.45];C.headTest=lp=>lp.z>-.2&&lp.y>-.3;return C}
-function foxSize(id){const C=PROC[id]();C.root.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(C.root),z=b.getSize(new THREE.Vector3());return{xz:Math.max(z.x,z.z),y:z.y}}
+function foxSize(id){const C=PROC[id](false);C.root.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(C.root),z=b.getSize(new THREE.Vector3());return{xz:Math.max(z.x,z.z),y:z.y}}
 let FOXSZ={};
 
 /* ---------- Nimbri: carneirinho de nuvem montado em código, igual à folha de referência ---------- */
-function buildCloud(){
+function buildCloud(evo){
   if(!SPH)SPH=new THREE.SphereGeometry(1,30,22);
   const W='#f4f6fb',W2='#dde7f7',B='#6f9be0',B2='#9dbcf0',body=grp(),root=grp(),C={root,body,ears:[],legs:[],eyes:[],lids:[],brows:[],segs:[],wings:[],smoke:[]};root.add(body);
   let sd=11;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
@@ -2075,14 +2078,59 @@ function buildCloud(){
   for(const s of[-1,1]){const g=P(grp(),s*.24,.16,-.05);head.add(g);C.ears.push(g);
     g.add(sdfMesh([{c:[0,0,0],r:[.13,.13,.13],col:B,w:1},{c:[s*.06,.1,-.05],r:[.1,.1,.1],col:B2,w:1},{c:[s*.12,-.02,-.06],r:[.09,.09,.09],col:B,w:1},{c:[0,.02,.1],r:[.08,.08,.08],col:B,w:1}],.04,.026,.003))}
   head.add(sdfMesh([{c:[-.1,.26,-.12],r:[.13,.12,.12],col:B,w:1},{c:[.1,.28,-.1],r:[.12,.12,.12],col:B2,w:1},{c:[0,.33,-.2],r:[.14,.13,.13],col:B,w:1},{c:[0,.22,-.02],r:[.1,.08,.1],col:W,w:1}],.05,.028,.003));
+  if(evo){// Nimbri Tempestade: nuvem maior, mais azul, com raios
+    const cp=[];for(let k=0;k<12;k++){const a=k*2.4;cp.push({c:[Math.cos(a)*.3,.38+(k%3)*.07,-.1+Math.sin(a)*.4],r:[.17,.17,.17],col:k%2?B:B2,w:4})}
+    body.add(sdfMesh(cp,.03,.03,.005));
+    const bolt=new THREE.MeshBasicMaterial({color:0xffe85a});
+    for(const s of[-1,1])for(let k=0;k<3;k++){const g=P(grp(),s*(.5+k*.04),.1+k*.2,-.1-k*.18);const pts=[[0,.2,0],[.06*s,.08,0],[-.02*s,.02,0],[.05*s,-.14,0]];for(let q=0;q<3;q++){const a=pts[q],b=pts[q+1],d=new THREE.Vector3(b[0]-a[0],b[1]-a[1],0),m=new THREE.Mesh(new THREE.BoxGeometry(.014,d.length(),.014),bolt);m.position.set((a[0]+b[0])/2,(a[1]+b[1])/2,0);m.rotation.z=-Math.atan2(d.x,d.y);g.add(m)}body.add(g)}}
   head.position.set(0,.1,.6);head.scale.setScalar(1.12);
   C.lidOpen=-1.95;C.baseY=0;C.mouth=[0,-.1,.28];C.headTest=lp=>lp.z>-.2&&lp.y>-.28;return C}
+
+/* ---------- formas evoluídas dos 20 grandes (nível 50): asas, cristais, coroas e brilhos, como na folha de evolução ---------- */
+const EVY=new THREE.Vector3(0,1,0),EVS=.5;
+function evBasis(m,dir){const y=new THREE.Vector3(dir[0],dir[1],dir[2]).normalize(),z=new THREE.Vector3(0,0,1).addScaledVector(y,-y.z);if(z.lengthSq()<.02)z.set(0,1,0);z.normalize();const x=new THREE.Vector3().crossVectors(y,z);m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z))}
+function evLeaf(g,pos,dir,len,wid,c0,c1,bend,flat,roll){len*=EVS;wid*=EVS;const m=flameLeaf(len,wid,c0,c1,bend);m.position.set(pos[0],pos[1],pos[2]);if(flat)evBasis(m,dir);else{m.quaternion.setFromUnitVectors(EVY,new THREE.Vector3(dir[0],dir[1],dir[2]).normalize());m.rotateY(roll||0)}g.add(m);return m}
+function evFan(side,pos,n,len,wid,a0,a1,c0,c1,bend){const g=new THREE.Group();g.position.set(pos[0],pos[1],pos[2]);
+  for(let k=0;k<n;k++){const t=n>1?k/(n-1):0,a=(a0+(a1-a0)*t)*Math.PI/180;evLeaf(g,[0,0,0],[side*Math.cos(a),Math.sin(a),-.3-.25*t],len*(1-.28*Math.abs(t-.3)),wid,c0,c1,bend,true)}return g}
+function evMat(col,glow){return new THREE.MeshStandardMaterial({color:new THREE.Color(col).convertSRGBToLinear(),roughness:.55,metalness:.05,emissive:new THREE.Color(col).convertSRGBToLinear(),emissiveIntensity:glow||0})}
+function evCone(g,pos,dir,r,h,col,glow,seg){r*=EVS;h*=EVS;const geo=new THREE.ConeGeometry(r,h,seg||6);geo.translate(0,h/2,0);const m=new THREE.Mesh(geo,evMat(col,glow));m.position.set(pos[0],pos[1],pos[2]);m.quaternion.setFromUnitVectors(EVY,new THREE.Vector3(dir[0],dir[1],dir[2]).normalize());g.add(m);return m}
+function evBall(g,pos,r,col,glow){const m=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),evMat(col,glow));m.position.set(pos[0],pos[1],pos[2]);g.add(m);return m}
+function evFlower(g,pos,size,col,col2,mid){size*=.75;const f=new THREE.Group();f.position.set(pos[0],pos[1],pos[2]);for(let k=0;k<6;k++){const a=k/6*Math.PI*2;evLeaf(f,[0,0,0],[Math.cos(a),.35,Math.sin(a)],size,size*.42,col,col2,.1,false,0)}evBall(f,[0,.02,0],size*.2,mid||'#ffd23c',.3);g.add(f);return f}
+function evRing(g,pos,r,col,arc,rot){const m=new THREE.Mesh(new THREE.TorusGeometry(r,.014,8,40,arc||Math.PI*2),new THREE.MeshBasicMaterial({color:new THREE.Color(col)}));m.position.set(pos[0],pos[1],pos[2]);if(rot)m.rotation.set(rot[0],rot[1],rot[2]);g.add(m);return m}
+// cada forma: recebe (g, hc) com g no espaço do modelo (corpo ~1 de comprimento, costas em y~.5)
+const EVOX={
+ 0:g=>{for(let k=0;k<7;k++){const z=.3-k*.11,h=.2-Math.abs(k-2)*.015;evCone(g,[0,.52,z],[0,1,-.35],.075,h+.08,'#8a5a3a',.0,6)}for(const s of[-1,1]){evCone(g,[s*.2,.46,.12],[s*.8,1,-.2],.07,.2,'#9a6a44',0,6);evCone(g,[s*.2,.44,-.12],[s*.8,1,-.3],.06,.16,'#9a6a44',0,6)}},
+ 1:(g,h)=>{for(const s of[-1,1])for(let k=0;k<3;k++){const m=evLeaf(g,[h[0]+s*.1,h[1]+.05,h[2]-.05],[s*(.5+k*.25),.6-k*.2,-1],.55+k*.1,.08,'#2f8ee8','#9be8ff',.25,true)}
+   for(let k=0;k<5;k++)evLeaf(g,[0,.5,.25-k*.14],[0,1,-.7],.32,.1,'#2a78d8','#7fdcff',.15,true)},
+ 3:g=>{for(const s of[-1,1]){const f=evFan(s,[s*.1,.46,.1],9,.62,.13,10,100,'#cfd8ff','#f2f0ff',.25);g.add(f);(g.userData.w=g.userData.w||[]).push({g:f,s})}},
+ 4:g=>{for(const s of[-1,1]){const f=evFan(s,[s*.1,.44,.08],8,.58,.14,5,95,'#3a1f78','#b060ff',.22);g.add(f);(g.userData.w=g.userData.w||[]).push({g:f,s})}},
+ 5:(g,h)=>{evFlower(g,[h[0]-.14,h[1]+.18,h[2]-.02],.12,'#ff5aa8','#ffc4e2');evFlower(g,[h[0]+.14,h[1]+.17,h[2]-.02],.11,'#ff7ac0','#ffd6ea');evFlower(g,[h[0],h[1]+.24,h[2]-.1],.13,'#ff4a9a','#ffbadc');for(let k=0;k<4;k++)evFlower(g,[(k%2?1:-1)*.16,.5,.2-k*.14],.1,'#ff6ab4','#ffcce6');for(let k=0;k<6;k++)evLeaf(g,[0,.5,.25-k*.1],[(k%2?1:-1)*.5,1,-.5],.3,.09,'#4f9a2e','#9de060',.1,false,k)},
+ 6:g=>{for(let k=0;k<9;k++){const s=k%2?1:-1,z=.28-k*.075;evCone(g,[s*.07,.5,z],[s*.25,1,-.35],.06,.2+((k*7)%3)*.04,'#7fd0ff',.5,5)}for(const s of[-1,1])evCone(g,[s*.18,.44,.05],[s*.9,1,-.2],.055,.18,'#a6e4ff',.5,5)},
+ 7:g=>{for(let k=0;k<7;k++){const s=k%2?1:-1;evLeaf(g,[s*.04,.5,.28-k*.1],[s*.5,1,-.6],.34+(k%3)*.05,.07,'#ffd21c','#fff27a',.1,true)}evLeaf(g,[0,.28,-.46],[0,.8,-1],.5,.14,'#ffe22a','#fffbb0',.12,true);for(let k=0;k<4;k++)evLeaf(g,[0,.3,-.46],[(k-1.5)*.5,.6,-1],.34,.07,'#ffd21c','#fff27a',.1,true)},
+ 8:g=>{for(let k=0;k<7;k++){const s=k%2?1:-1;evCone(g,[s*.12,.52,.3-k*.11],[s*.5,1,-.3],.07,.2+(k%3)*.05,'#ff6a1a',.9,6)}for(const s of[-1,1])evCone(g,[s*.14,.4,.38],[s*.8,.9,.4],.05,.2,'#ff8a2a',.9,6)},
+ 9:(g,h)=>{evRing(g,[h[0],h[1]+.07,h[2]-.1],.2,'#ffd870',Math.PI*1.4,[0,0,Math.PI*.8]);for(let k=0;k<6;k++)evBall(g,[(Math.sin(k*2.1)*.32),.45+(k%3)*.1,(Math.cos(k*1.3)*.25)],.016,'#ffe9a0',1)},
+ 10:(g,h)=>{for(const s of[-1,1])for(let k=0;k<4;k++)evLeaf(g,[h[0]+s*.07,h[1]+.17,h[2]-.04],[s*(.5+k*.2),1,-.15-k*.1],.2,.06,'#4a9a2e','#b4ee70',.1,false,k);evRing(g,[h[0],h[1]+.1,h[2]-.1],.17,'#d8f090',Math.PI*2,[0,0,0])},
+ 11:g=>{for(const s of[-1,1]){const f=evFan(s,[s*.1,.46,.06],8,.68,.15,5,100,'#7a1418','#e04a28',.2);g.add(f);(g.userData.w=g.userData.w||[]).push({g:f,s})}},
+ 13:g=>{for(let k=0;k<7;k++)evBall(g,[Math.sin(k*2.3)*.2,.5+(k%2)*.04,.28-k*.1],.06+(k%3)*.02,'#5f9a2a',.0);for(let k=0;k<4;k++)evBall(g,[(k%2?1:-1)*.18,.38,.2-k*.14],.08,'#8a8478',0);for(let k=0;k<3;k++)evBall(g,[(k-1)*.08,.58,.1-k*.1],.035,'#ffd860',1)},
+ 14:g=>{for(let k=0;k<10;k++){const a=k/10*Math.PI*2;evLeaf(g,[Math.cos(a)*.25,.15+(k%3)*.1,Math.sin(a)*.4],[Math.cos(a)*.6,.8,Math.sin(a)*.6],.34,.06,'#6a22c0','#d090ff',.2,false,k)}},
+ 15:g=>{for(let k=0;k<10;k++){const c=['#ff7aa8','#ffa24a','#ff5a8a','#ffd070'][k%4],a=k*1.7;evCone(g,[Math.sin(a)*.14,.5,.22-k*.07],[Math.sin(a)*.5,1,-.1],.045,.2,c,.2,5);evBall(g,[Math.sin(a)*.14+Math.sin(a)*.1,.7,.22-k*.07],.03,c,.4)}},
+ 16:g=>{for(const s of[-1,1]){const f=evFan(s,[s*.1,.4,.06],10,.62,.15,0,95,'#ff5a14','#ffd64a',.2);g.add(f);(g.userData.w=g.userData.w||[]).push({g:f,s})}for(let k=0;k<5;k++)evLeaf(g,[0,.2,-.2],[(k-2)*.3,.2,-1],.5,.1,'#ff5a14','#ffd64a',.15,true)},
+ 17:g=>{for(const s of[-1,1]){const f=evFan(s,[s*.06,.4,.04],9,.6,.14,0,100,'#ff9ad4','#9be0ff',.2);g.add(f);(g.userData.w=g.userData.w||[]).push({g:f,s})}for(let k=0;k<8;k++)evBall(g,[Math.sin(k*2.4)*.35,.3+(k%4)*.12,Math.cos(k*1.9)*.3],.014,'#ffffff',1)},
+ 18:g=>{for(let k=0;k<9;k++){const s=k%2?1:-1;evCone(g,[s*.06,.5,.28-k*.08],[s*.3,1,-.35],.06,.22+(k%3)*.05,'#b050ff',.7,5)}for(const s of[-1,1])evCone(g,[s*.15,.44,.12],[s*.9,1,-.1],.05,.2,'#c070ff',.7,5)},
+ 19:(g,h)=>{for(const s of[-1,1]){const f=evFan(s,[s*.08,.44,.06],8,.6,.12,5,95,'#fff1b0','#ffd23c',.2);g.add(f);(g.userData.w=g.userData.w||[]).push({g:f,s})}evRing(g,[h[0],h[1]+.08,h[2]-.08],.2,'#ffe27a',Math.PI*2,[Math.PI*.45,0,0])}
+};
+function makeEvo(i){const C=V.C;if(!C||!C.obj||!EVOX[i])return;const m=C.m||{};let h=m.hc||m.HC||[0,.3,.35];const g=new THREE.Group();g.userData.keep=1;
+  // altura real das costas no centro do corpo: as peças nascem ali
+  C.obj.updateMatrixWorld(true);const rc=new THREE.Raycaster();let ys=[];for(const z of[.12,0,-.12]){const o=C.obj.localToWorld(new THREE.Vector3(0,3,z));rc.set(o,new THREE.Vector3(0,-1,0));const hh=rc.intersectObject(C.obj,true)[0];if(hh)ys.push(C.obj.worldToLocal(hh.point.clone()).y)}
+  const T=ys.length?ys.reduce((a,b)=>a+b)/ys.length:.45,dy=Math.max(-.2,Math.min(.2,T-.5));g.position.y=dy;h=[h[0],h[1]-dy,h[2]];
+  EVOX[i](g,h);g.traverse(o=>{o.userData.keep=1;o.castShadow=false});C.obj.add(g);V.evoG=g;V.evoW=g.userData.w||null;
+  if(!V.evoK){V.evoK=1;V.size={xz:V.size.xz*(g.userData.w?1.35:1.1),y:V.size.y*1.1};if(V.open)fit()}}
 const PROC={2:buildFox,12:buildCloud};
 function openFox(i,pop){
   setDet(i);
   if(!initViewer())return false;
   if(V.C&&V.C.root)V.spin.remove(V.C.root);if(V.T){V.spin.remove(V.T.root);V.T=null}
-  const C=PROC[i]();
+  const C=PROC[i](careStage(i)>0);
   V.mode='creature';V.chibi=true;V.C=C;V.sp={h:.24,tl:'',bird:0};
   C.gs=gsOf(i,careStage(i));C.root.scale.setScalar(C.gs);
   setFloor(i);castAll(C.root);

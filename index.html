@@ -1327,7 +1327,8 @@ function fit(){
   const cvs=$('v3d'),w=cvs.clientWidth,h=cvs.clientHeight;if(!w||!h)return;
   V.renderer.setSize(w,h,false);V.cam.aspect=w/h;V.cam.updateProjectionMatrix();
   const visH=2*6*Math.tan(18*Math.PI/180),visW=visH*V.cam.aspect;
-  const k=Math.min(visW*.7/V.size.xz,visH*.5/V.size.y,visW*.62/Math.max(V.size.y,1e-3));V.spin.scale.setScalar(k);
+  const gg=Math.max(1,(V.C&&V.C.gs)||1),Sxz=V.size.xz*gg,Sy=V.size.y*gg;
+  const k=Math.min(visW*.7/Sxz,visH*.5/Sy,visW*.62/Math.max(Sy,1e-3));V.spin.scale.setScalar(k);
   const ground=-k*V.size.y/2-.15;V.spin.position.y=ground+k;V.k=k;V.ground=ground;V.floorR=Math.min(visW*.5,visH*.42,V.size.xz*k*1.15);
   V.shadow.position.y=ground+.01;V.shadow.scale.set(V.size.xz*k*1.1,V.size.xz*k*.8,1);
 }
@@ -2119,7 +2120,7 @@ const EVOX={
  8:g=>{for(let k=0;k<7;k++){const s=k%2?1:-1;evCone(g,[s*.12,.52,.3-k*.11],[s*.5,1,-.3],.07,.2+(k%3)*.05,'#ff6a1a',.9,6)}for(const s of[-1,1])evCone(g,[s*.14,.4,.38],[s*.8,.9,.4],.05,.2,'#ff8a2a',.9,6)},
  10:(g,h)=>{for(const s of[-1,1])for(let k=0;k<4;k++)evLeaf(g,[h[0]+s*.07,h[1]+.17,h[2]-.04],[s*(.5+k*.2),1,-.15-k*.1],.2,.06,'#4a9a2e','#b4ee70',.1,false,k);evRing(g,[h[0],h[1]+.1,h[2]-.1],.17,'#d8f090',Math.PI*2,[0,0,0])},
  11:g=>{for(const s of[-1,1]){const f=evFan(s,[s*.1,.46,.06],8,.68,.15,5,100,'#7a1418','#e04a28',.2);g.add(f);(g.userData.w=g.userData.w||[]).push({g:f,s})}},
- 13:g=>{for(let k=0;k<7;k++)evBall(g,[Math.sin(k*2.3)*.2,.5+(k%2)*.04,.28-k*.1],.06+(k%3)*.02,'#5f9a2a',.0);for(let k=0;k<4;k++)evBall(g,[(k%2?1:-1)*.18,.38,.2-k*.14],.08,'#8a8478',0);for(let k=0;k<3;k++)evBall(g,[(k-1)*.08,.58,.1-k*.1],.035,'#ffd860',1)},
+ 13:g=>{for(let k=0;k<6;k++){const z=.28-k*.1,s=k%2?1:-1;evCone(g,[s*.08,.5,z],[s*.3,1,-.2],.07,.17+(k%3)*.04,'#8a8478',0,5);evBall(g,[s*.15,.5,z-.02],.03,'#5f9a2a',0)}for(let k=0;k<3;k++)evBall(g,[(k-1)*.08,.6,.1-k*.1],.03,'#ffd860',1)},
  14:g=>{for(let k=0;k<10;k++){const a=k/10*Math.PI*2;evLeaf(g,[Math.cos(a)*.25,.15+(k%3)*.1,Math.sin(a)*.4],[Math.cos(a)*.6,.8,Math.sin(a)*.6],.34,.06,'#6a22c0','#d090ff',.2,false,k)}},
  16:g=>{for(const s of[-1,1]){const f=evFan(s,[s*.1,.4,.06],10,.62,.15,0,95,'#ff5a14','#ffd64a',.2);g.add(f);(g.userData.w=g.userData.w||[]).push({g:f,s})}for(let k=0;k<5;k++)evLeaf(g,[0,.2,-.2],[(k-2)*.3,.2,-1],.5,.1,'#ff5a14','#ffd64a',.15,true)},
 };

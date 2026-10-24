@@ -69,3 +69,8 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - Fim do "quadriculado": Aquarim, Coralith, Lunaris, Voltik, Floriss, Zephyra, Lumina, Toxilys e Auren foram reduzidos de novo mantendo a textura original do Tripo (sem mosaico). Terranox ficou mais verde.
 - Arquivos de modelo e pele agora levam `?v=` no endereço, para o celular não mostrar a versão antiga guardada.
 - **Flarion** agora usa o corpo de raposa do Voltik pintado de fogo (`models/skins/2.jpg`), no lugar da raposa feita em código. Quando chegar um modelo próprio do Tripo, é só trocar o arquivo em `MODELS[2]`.
+
+### Luta cara a cara (correção definitiva) e Terranox novo
+- O bote e o empurrão da luta usavam a mesma direção para os dois lados; com a imagem espelhada, o bicho dava o bote para trás e parecia olhar para o rabo do outro. Agora os movimentos são escritos "para a frente" e o lado direito espelha o movimento inteiro (`bA`). Testado nas 1806 duplas possíveis (43 × 42): cabeça virada para o adversário, parado e no ataque.
+- **Terranox** usa o modelo Tripo do dinossauro (espinhos repintados de marrom, corpo verde), sem as peças extras de antes.
+- Dos arquivos enviados, 9 eram iguais aos que já estavam no jogo e o `baby_dragon` saiu do Tripo como um quadro plano (a folha inteira), então não foi usado.

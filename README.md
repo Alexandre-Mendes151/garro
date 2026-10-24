@@ -79,3 +79,9 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - Chegaram os que faltavam: **Glacien** (dragão de gelo), **Flarion** (raposa de fogo), **Petrun** (tartaruga de pedra com musgo) e **Nimbri** (nuvem fofa; veio no mesmo arquivo do Petrun e foi separado). Todos reduzidos mantendo a textura original.
 - Flarion e Nimbri não são mais montados em código (`PROC` vazio). As peles repintadas antigas `skins/0, 2, 6, 13` saíram.
 - Evolução desses quatro: brilho, anel e auréola na cor do elemento (`EVCROWN`).
+
+### Economia e máquina
+- **Moedas infinitas só para desenvolvedores:** as contas Google `alexandre.et@gmail.com` e `joaobazanela@gmail.com` (lista `DEV_EMAILS`) veem ∞ e jogam, compram e trocam sem gastar. Para todos os outros nada muda. Na versão sem login (artefato/demo) o modo dev liga e desliga tocando 7 vezes no contador de moedas, e vale só para aquele aparelho.
+- **Reposição mais lenta:** a máquina não enche mais de volta a cada jogada. Cai 1 bichinho novo a cada 4 jogadas quando a pilha está baixa; só repõe 3 de uma vez se ficar quase vazia (menos de 6).
+- **Trocar bichinhos da máquina:** botão abaixo dos controles, custa 10 moedas (`SWAP_COST`). Tira todos e sorteia uma pilha nova.
+- **Venda de um em um:** cada redondo vendido vale 1 moeda e dá para vender até o último. **Servidor:** publicar a migração `0004_venda_um_a_um.sql` e a função `sync-estado` atualizada (aceita `qty` a partir de 1). Até lá, a venda é guardada no aparelho.

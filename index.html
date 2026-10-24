@@ -79,6 +79,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .detail h3{margin:0 0 2px;font-size:16px;font-weight:900}
 .detail p{margin:0;color:var(--dim)}
 .detail .stats{color:var(--amber);font-weight:800;margin-top:4px}
+.swapbtn{display:block;margin:8px auto 0;background:#2a1838;color:#ffd7ef;border:1px solid #6a3f7e;border-radius:999px;padding:8px 16px;font-weight:800;font-size:13px}.swapbtn:disabled{opacity:.45}
 .foot{display:flex;justify-content:space-between;gap:8px}
 .foot button{background:none;color:var(--dim);font-weight:800;font-size:12px;padding:6px 0}
 @media (prefers-reduced-motion:reduce){.marquee{animation:none}.banner{transition:none}}
@@ -247,6 +248,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
     <button class="arrow" id="right" aria-label="Mover garra para a direita">▶</button>
     <button class="drop" id="drop">PEGAR</button>
   </div>
+  <button class="swapbtn" id="btnSwap" type="button">🔄 Trocar bichinhos da máquina · <b id="swapCost">10</b> 🪙</button>
   <p class="hint" id="hint">Toque nas setas para colocar uma moeda</p>
 </div>
 
@@ -374,6 +376,7 @@ async function syncEstado(action,extra){
 }
 
 async function carregarEstado(){
+  try{const {data:{session:s0}}=await sb.auth.getSession();DEV=!!(s0&&s0.user&&DEV_EMAILS.includes((s0.user.email||'').toLowerCase()))}catch(e){}
   const {data:ps}=await sb.from('player_state').select('coins,wins').single();
   const {data:colRows}=await sb.from('collection').select('plush_id,count');
   coins=(ps?ps.coins:15)+bonus;
@@ -457,9 +460,17 @@ function fill(n,fromY){
   const cnt={};bodies.forEach(b=>cnt[b.plush.i]=(cnt[b.plush.i]||0)+1);
   for(let k=0;k<n;k++){let p=pickPlush(cnt);if(!bodies.some(b=>b.plush.stone!==undefined)&&!cnt.stone&&Math.random()<.012){p=STONES[Math.floor(Math.random()*STONES.length)];cnt.stone=1}cnt[p.i]=(cnt[p.i]||0)+1;addPlush(p,DIV+60+Math.random()*(W-DIV-110),fromY-k*70)}
 }
-fill(PILE,FLOOR-60);
-for(let i=0;i<500;i++)Engine.update(engine,1000/60);
-for(let i=bodies.length-1;i>=0;i--)if(bodies[i].position.x<DIV){Composite.remove(world,bodies[i]);bodies.splice(i,1)}
+function settlePile(){fill(PILE,FLOOR-60);for(let i=0;i<500;i++)Engine.update(engine,1000/60);
+  for(let i=bodies.length-1;i>=0;i--)if(bodies[i].position.x<DIV){Composite.remove(world,bodies[i]);bodies.splice(i,1)}}
+settlePile();
+// novos bichos caem devagar: 1 a cada 4 jogadas quando a pilha baixa; só repõe 3 de uma vez se estiver quase vazia
+let sinceDrop=0;
+function restock(){sinceDrop++;if(bodies.length<6){fill(Math.min(3,PILE-bodies.length),-60);sinceDrop=0}else if(bodies.length<13&&sinceDrop>=4){fill(1,-60);sinceDrop=0}}
+const SWAP_COST=10;
+function swapMachine(){if(claw.state!=='ready'){banner('Espere a garra voltar');return}
+  if(!canPay(SWAP_COST)){banner('Moedas insuficientes','Trocar custa '+SWAP_COST+' 🪙');return}
+  spend(SWAP_COST);for(const b of bodies)Composite.remove(world,b);bodies.length=0;settlePile();sinceDrop=0;
+  audio();[523,659,784].forEach((f,k)=>setTimeout(()=>tone(f,.12,'triangle',.09),k*90));banner('Bichinhos trocados!',DEV?'grátis (dev)':'-'+SWAP_COST+' 🪙',true);hud()}
 
 /* ---------- claw ---------- */
 const claw={x:HOME,y:REST,open:1,oL:1,oR:1,oB:1,lb:null,rb:null,bsnag:false,target:null,snag:false,state:'ready',t:0,held:null,link:null,force:0,hold:0,slipAt:-1,moving:0,hits:0};
@@ -559,12 +570,17 @@ const totalWins=()=>Object.values(coll).reduce((a,b)=>a+b,0);
 const XKEY='garro-coll';let XCOLL={};try{XCOLL=JSON.parse(localStorage.getItem(XKEY)||'{}')||{}}catch(e){XCOLL={}}
 function saveX(){try{localStorage.setItem(XKEY,JSON.stringify(coll));localStorage.setItem('garra-real',JSON.stringify(coll))}catch(e){}}
 let bonus=0;try{bonus=+localStorage.getItem('garro-bonus')||0}catch(e){}
+// moedas infinitas só para quem desenvolve (conta Google). Na versão sem login: tocar 7x no contador de moedas liga/desliga.
+const DEV_EMAILS=['alexandre.et@gmail.com','joaobazanela@gmail.com'];let DEV=false;
+try{if(window.GARRO_OFFLINE&&localStorage.getItem('garro-dev')==='1')DEV=true}catch(e){}
+const canPay=n=>DEV||coins>=n;
+function spend(n){if(DEV)return;coins-=n;bonus-=n;saveBonus()}
 function saveBonus(){try{localStorage.setItem('garro-bonus',String(bonus))}catch(e){}}
 
 let bannerT=0;
 function banner(t,sub,win){const b=$('banner');b.innerHTML=t+(sub?'<small>'+sub+'</small>':'');b.className='banner show'+(win?' win':'');clearTimeout(bannerT);bannerT=setTimeout(()=>b.className='banner',2200)}
 function hud(){
-  $('coins').textContent=coins;$('wins').textContent=totalWins();
+  $('coins').textContent=DEV?'∞':coins;$('wins').textContent=totalWins();
   $('time').textContent=claw.state==='move'?Math.ceil(roundTime/60):'--';
   $('drop').disabled=claw.state!=='move';
 }
@@ -576,10 +592,10 @@ function showGrab(p,force,closed){
 
 function start(){
   if(claw.state!=='ready')return false;
-  if(coins<=0){$('hint').textContent='Sem moedas. Toque em +15 moedas abaixo.';banner('Sem moedas');return false}
-  const useBonus=bonus>0&&coins-bonus<=0;
-  coins--;claw.state='move';roundTime=ROUND;roundWin=false;
-  if(useBonus){bonus--;saveBonus()}else syncEstado('round_start').then(r=>{if(r)coins=r.coins+bonus});
+  if(!DEV&&coins<=0){$('hint').textContent='Sem moedas. Toque em +15 moedas abaixo.';banner('Sem moedas');return false}
+  claw.state='move';roundTime=ROUND;roundWin=false;
+  if(!DEV){const useBonus=bonus>0&&coins-bonus<=0;coins--;
+    if(useBonus){bonus--;saveBonus()}else syncEstado('round_start').then(r=>{if(r)coins=r.coins+bonus});}
   // real machines vary the claw voltage each play; after a losing streak they pay out
   claw.force=losses>=6?1150+Math.random()*150:520+Math.random()*560;
   $('hint').textContent='Posicione e aperte PEGAR';click(500);hud();return true;
@@ -660,8 +676,8 @@ function step(){
     if(c.t===22&&c.held)release();
     if(c.t>110){
       c.state='ready';if(!roundWin){losses++;if(!$('banner').classList.contains('show'))banner('Não foi dessa vez')}
-      $('hint').textContent=coins>0?'Toque nas setas para jogar de novo':'Acabaram as moedas';
-      if(bodies.length<13)fill(PILE-bodies.length,-60);
+      $('hint').textContent=(DEV||coins>0)?'Toque nas setas para jogar de novo':'Acabaram as moedas';
+      restock();
       hud();
     }
   }
@@ -1803,24 +1819,27 @@ function renderCare(){
 }
 function updFood(){const s=$('cFeed')&&$('cFeed').querySelector('span');if(s)s.textContent='🍓 Comida ×'+INV.food}
 function useStone(){const i=V.cur;if(i===undefined||i>=CH0)return;const k=STONE_OF(i);if(INV.st[k]<=0||lvOf(i)>=EVO_LV)return;const c=careOf(i);INV.st[k]--;saveInv();audio();[523,784,1046,1568].forEach((f,q)=>setTimeout(()=>tone(f,.14,'triangle',.1),q*90));for(let q=0;q<6;q++)setTimeout(()=>float('💎','love'),q*90);gainXp(i,Math.max(1,(EVO_LV-1)*4-c.xp));renderCare()}
-function renderSell(i){const b=$('cSell');if(!b)return;if(i<CH0){b.hidden=true;return}const n=coll[i]||0,q=Math.floor((n-1)/2)*2;b.hidden=false;b.disabled=q<2;
-  b.textContent=q>=2?'💰 Vender '+q+' repetidas · +'+q/2+' moeda'+(q>2?'s':''):'💰 Repetidas valem moeda: 2 = 1 (tenho '+n+')'}
-async function sellDup(){const i=V.cur;if(i===undefined||i<CH0)return;const n=coll[i]||0,q=Math.floor((n-1)/2)*2;if(q<2)return;const gain=q/2,b=$('cSell');b.disabled=true;
+const SELL_PRICE=1;// cada redondo vendido vale 1 moeda; pode vender até o último
+function renderSell(i){const b=$('cSell');if(!b)return;if(i<CH0){b.hidden=true;return}const n=coll[i]||0;b.hidden=false;b.disabled=n<1;
+  b.textContent=n>=1?'💰 Vender 1 · +'+SELL_PRICE+' moeda (tenho '+n+')':'💰 Nenhum para vender'}
+async function sellDup(){const i=V.cur;if(i===undefined||i<CH0)return;const n=coll[i]||0,q=1;if(n<1)return;const gain=q*SELL_PRICE,b=$('cSell');b.disabled=true;
   const r=await syncEstado('sell',{plushId:i,qty:q});
-  if(r&&typeof r.coins==='number'){coins=r.coins+bonus;coll[i]=Math.max(1,r.count||n-q)}else{coll[i]=n-q;bonus+=gain;coins+=gain;saveBonus()}
+  if(r&&typeof r.coins==='number'){coins=r.coins+bonus;coll[i]=Math.max(0,typeof r.count==='number'?r.count:n-q)}else{coll[i]=n-q;bonus+=gain;coins+=gain;saveBonus()}
   saveX();audio();[784,988,1319,1568].forEach((f,k)=>setTimeout(()=>tone(f,.12,'triangle',.09),k*80));
-  for(let k=0;k<6;k++)setTimeout(()=>float('🪙','love'),k*100);banner('+'+gain+' moeda'+(gain>1?'s':''),'Vendeu '+q+' '+PLUSH[i].name,true);
+  for(let k=0;k<6;k++)setTimeout(()=>float('🪙','love'),k*100);banner('+'+gain+' moeda'+(gain>1?'s':''),'Vendeu '+PLUSH[i].name+(coll[i]?'':' (era o último)'),true);
   hud();renderShelf();renderSell(i);if(V.open)refreshVStats(i)}
 $('cSell').addEventListener('click',sellDup);
+$('btnSwap').addEventListener('click',swapMachine);
+{let tc=0,tt=0;$('coins').parentElement.addEventListener('click',()=>{if(!window.GARRO_OFFLINE)return;const now=Date.now();if(now-tt>1500)tc=0;tt=now;if(++tc>=7){tc=0;DEV=!DEV;try{localStorage.setItem('garro-dev',DEV?'1':'0')}catch(e){}banner(DEV?'Modo dev: moedas infinitas':'Modo dev desligado');hud()}})}
 
 /* ---------- loja ---------- */
 const PRICE={food:5,stone:400};
-function renderShop(){$('shCoins').textContent=coins;$('shFood').textContent=INV.food;$('buyFood').disabled=coins<PRICE.food;
+function renderShop(){$('shCoins').textContent=DEV?'∞':coins;$('shFood').textContent=INV.food;$('buyFood').disabled=!canPay(PRICE.food);
   const g=$('shStones');if(!g.children.length){STONES.forEach((p,k)=>{const d=document.createElement('div');d.className='shst';d.innerHTML='<img src="'+p.img+'" alt=""><b>'+p.name+'</b><small>'+p.desc+'</small><small>Você tem: <i id="shS'+k+'">0</i></small><button data-k="'+k+'">400 🪙</button>';g.appendChild(d)});
     g.addEventListener('click',e=>{const b=e.target.closest('button');if(b)buyThing('stone',+b.dataset.k)})}
-  STONES.forEach((p,k)=>{$('shS'+k).textContent=INV.st[k]});g.querySelectorAll('button').forEach(b=>b.disabled=coins<PRICE.stone)}
-function buyThing(kind,k){const pr=PRICE[kind];if(coins<pr){$('shMsg').textContent='Moedas insuficientes: faltam '+(pr-coins)+' 🪙';return}$('shMsg').textContent='';
-  coins-=pr;bonus-=pr;saveBonus();if(kind==='food')INV.food++;else INV.st[k]++;saveInv();hud();audio();[784,988,1319].forEach((f,q)=>setTimeout(()=>tone(f,.1,'triangle',.08),q*70));renderShop();if(V.open)renderCare()}
+  STONES.forEach((p,k)=>{$('shS'+k).textContent=INV.st[k]});g.querySelectorAll('button').forEach(b=>b.disabled=!canPay(PRICE.stone))}
+function buyThing(kind,k){const pr=PRICE[kind];if(!canPay(pr)){$('shMsg').textContent='Moedas insuficientes: faltam '+(pr-coins)+' 🪙';return}$('shMsg').textContent='';
+  spend(pr);if(kind==='food')INV.food++;else INV.st[k]++;saveInv();hud();audio();[784,988,1319].forEach((f,q)=>setTimeout(()=>tone(f,.1,'triangle',.08),q*70));renderShop();if(V.open)renderCare()}
 $('btnShop').addEventListener('click',()=>{audio();renderShop();$('shop').hidden=false});
 $('shClose').addEventListener('click',()=>{$('shop').hidden=true});
 $('buyFood').addEventListener('click',()=>buyThing('food'));

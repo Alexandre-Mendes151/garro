@@ -66,3 +66,5 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 ### Cores conferidas com a referência
 - Magmord (preto com lava), Glacien (cristais azuis), Draksel (vermelho) e Petrun (pedra cinza com musgo) foram repintados em `models/skins/` a partir dos modelos Tripo já enviados. Os .glb não mudaram.
 - Ainda pedem modelo novo do Tripo para ficarem iguais na forma: Flarion e Nimbri (hoje feitos em código) e Petrun (o modelo atual é um golem de lava).
+- Fim do "quadriculado": Aquarim, Coralith, Lunaris, Voltik, Floriss, Zephyra, Lumina, Toxilys e Auren foram reduzidos de novo mantendo a textura original do Tripo (sem mosaico). Terranox ficou mais verde.
+- Arquivos de modelo e pele agora levam `?v=` no endereço, para o celular não mostrar a versão antiga guardada.

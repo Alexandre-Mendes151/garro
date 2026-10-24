@@ -80,6 +80,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .detail p{margin:0;color:var(--dim)}
 .detail .stats{color:var(--amber);font-weight:800;margin-top:4px}
 .swapbtn{display:block;margin:8px auto 0;background:#2a1838;color:#ffd7ef;border:1px solid #6a3f7e;border-radius:999px;padding:8px 16px;font-weight:800;font-size:13px}.swapbtn:disabled{opacity:.45}
+.ver{text-align:center;color:var(--dim);font-size:10px;opacity:.6;margin:6px 0}
 .foot{display:flex;justify-content:space-between;gap:8px}
 .foot button{background:none;color:var(--dim);font-weight:800;font-size:12px;padding:6px 0}
 @media (prefers-reduced-motion:reduce){.marquee{animation:none}.banner{transition:none}}
@@ -133,7 +134,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 #ivPick{background:rgba(255,255,255,.07);border-radius:14px;padding:12px;display:grid;gap:8px}#ivPick h4{margin:0;color:#ffd25a;font-size:15px}.ivrow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center}.ivrow img{width:52px;height:46px;object-fit:contain}.ivrow b{color:#fff;font-size:14px}.ivrow small{display:block;color:var(--dim);font-size:11px;font-weight:700}
 .shnote{color:var(--dim);font-size:12px;font-weight:700;margin:0}
 .shclose{background:rgba(255,255,255,.12)!important;color:#fff!important}
-.cb.stone{background:linear-gradient(135deg,#7a3cf0,#e04ad0)}
+.cb.stone{background:linear-gradient(135deg,#7a3cf0,#e04ad0)}.cb.stone small{font-weight:700;opacity:.85}.cb.stone.buy{background:linear-gradient(135deg,#3a2a52,#5a2a5a)}
 .battle h3{margin:0;text-align:center;font-family:var(--display);font-weight:400;font-size:28px;color:#ffd25a}
 .bfield{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px}
 .bcard{position:relative;text-align:center;display:grid;gap:5px;justify-items:center}
@@ -259,7 +260,8 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
   <h2>Coleção <span id="count">0 de 35</span></h2>
   <div class="grid" id="grid"></div>
   <div class="detail" id="detail" hidden></div>
-  <div class="foot"><button id="refill">+15 moedas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
+  <div class="ver" id="verTag">versão 57 · 24/10 10:31</div>
+<div class="foot"><button id="refill">+15 moedas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
 </section>
 
 <div id="rankingPanel" hidden>
@@ -1234,7 +1236,7 @@ function evoTex(i,map){if(EVT[i])return EVT[i];const img=map.image;if(!img||!img
     d[p]=Math.max(0,Math.min(255,r*255));d[p+1]=Math.max(0,Math.min(255,g*255));d[p+2]=Math.max(0,Math.min(255,b*255))}
   x.putImageData(D,0,0);const t=new THREE.CanvasTexture(cv);t.flipY=map.flipY;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.wrapS=map.wrapS;t.wrapT=map.wrapT;return EVT[i]=t}
 function applyEvoTex(i){const C=V.C;if(!C||!C.obj)return;C.obj.traverse(o=>{if(o.isMesh&&!o.userData.keep&&o.userData.baseMap){o.material.map=evoTex(i,o.userData.baseMap);o.material.needsUpdate=true}})}
-const ASSETV='53';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
+const ASSETV='57';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
   new THREE.TextureLoader().load(src,t=>{t.flipY=false;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;res(t)},undefined,()=>res(null))})}
 function dropTail(g,m){const w=g.attributes.uv2;if(!w)return g;g=g.clone();const p=g.attributes.position,B=m.TA;
   for(let i=0;i<p.count;i++){const k=w.getX(i);if(k<=0)continue;const x=p.getX(i),y=p.getY(i),z=p.getZ(i);p.setXYZ(i,x+(B[0]+(x-B[0])*.1-x)*k,y+(B[1]+(y-B[1])*.1-y)*k,z+(B[2]+(z-B[2])*.1-z)*k)}
@@ -1855,10 +1857,10 @@ function renderCare(){
     $('cXp').textContent=st?'Nv '+lv+' · forma evoluída!':'Nv '+lv+' · evolui no Nv '+EVO_LV+' para '+evName(i,1);
     $('cXpBar').style.width=Math.min(100,st?(lv-EVO_LV)/(cap-EVO_LV)*100:(lv-1)/(EVO_LV-1)*100)+'%'}
   for(const [k,id,b] of [['f','mF','cFeed'],['l','mL','cPet'],['p','mP','cPlay']]){$(id).style.width=Math.round(c[k])+'%';$(b).classList.toggle('low',c[k]<25)}
-  updFood();const sb=$('cStone');if(sb){const sk=STONE_OF(i);sb.hidden=!(i<CH0&&!st&&INV.st[sk]>0);sb.textContent='💎 Usar '+STONES[sk].name+' · evolui agora'}
+  updFood();const sb=$('cStone');if(sb){const sk=STONE_OF(i),n=INV.st[sk]||0;sb.hidden=!(i<CH0&&!st);sb.classList.toggle('buy',!n);sb.innerHTML=n?'💎 Evoluir agora com '+STONES[sk].name+' <small>(você tem '+n+')</small>':'💎 Evoluir com '+STONES[sk].name+' <small>· você não tem · comprar '+PRICE.stone+' 🪙</small>'}
 }
 function updFood(){const s=$('cFeed')&&$('cFeed').querySelector('span');if(s)s.textContent='🍓 Comida ×'+INV.food}
-function useStone(){const i=V.cur;if(i===undefined||i>=CH0)return;const k=STONE_OF(i);if(INV.st[k]<=0||lvOf(i)>=EVO_LV)return;const c=careOf(i);INV.st[k]--;saveInv();audio();[523,784,1046,1568].forEach((f,q)=>setTimeout(()=>tone(f,.14,'triangle',.1),q*90));for(let q=0;q<6;q++)setTimeout(()=>float('💎','love'),q*90);gainXp(i,Math.max(1,(EVO_LV-1)*4-c.xp));renderCare()}
+function useStone(){const i=V.cur;if(i===undefined||i>=CH0)return;const k=STONE_OF(i);if(lvOf(i)>=EVO_LV)return;if((INV.st[k]||0)<=0){audio();renderShop();$('shop').hidden=false;return}const c=careOf(i);INV.st[k]--;saveInv();audio();[523,784,1046,1568].forEach((f,q)=>setTimeout(()=>tone(f,.14,'triangle',.1),q*90));for(let q=0;q<6;q++)setTimeout(()=>float('💎','love'),q*90);gainXp(i,Math.max(1,(EVO_LV-1)*4-c.xp));renderCare()}
 const SELL_PRICE=1;// cada redondo vendido vale 1 moeda; pode vender até o último
 function renderSell(i){const b=$('cSell');if(!b)return;if(i<CH0){b.hidden=true;return}const n=coll[i]||0;b.hidden=false;b.disabled=n<1;
   b.textContent=n>=1?'💰 Vender 1 · +'+SELL_PRICE+' moeda (tenho '+n+')':'💰 Nenhum para vender'}

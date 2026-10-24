@@ -100,3 +100,7 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - Ao chegar no Nv 50 (ou usar a pedra) a tela troca para o modelo evoluído. Na luta aparece a imagem da forma evoluída (`EVOSPR`).
 - Ainda sem modelo evoluído (usam a pele evoluída): Flarion, Floriss, Draksel (o arquivo veio como cartão plano), Nimbri, Petrun e Ignovus.
 - O artefato do Claude não cabe mais 14 modelos dentro dele (limite de 16 MB): ele busca as evoluções no repositório público do demo pelo jsDelivr; se não conseguir, usa a pele evoluída.
+
+### Luta cara a cara (definitivo)
+- As imagens da luta agora são próprias (`BSPR` para as 43 formas normais, `BSPRE` para as 14 evoluídas): todas desenhadas de perfil **olhando para a direita**. O bicho da esquerda usa a imagem como está e o da direita é sempre espelhado, então não depende mais de adivinhar para que lado cada modelo olha. Testado nas 1806 duplas (metade com formas evoluídas).
+- A coleção usa as mesmas imagens evoluídas.

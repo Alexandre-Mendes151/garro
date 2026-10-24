@@ -74,3 +74,8 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - O bote e o empurrão da luta usavam a mesma direção para os dois lados; com a imagem espelhada, o bicho dava o bote para trás e parecia olhar para o rabo do outro. Agora os movimentos são escritos "para a frente" e o lado direito espelha o movimento inteiro (`bA`). Testado nas 1806 duplas possíveis (43 × 42): cabeça virada para o adversário, parado e no ataque.
 - **Terranox** usa o modelo Tripo do dinossauro (espinhos repintados de marrom, corpo verde), sem as peças extras de antes.
 - Dos arquivos enviados, 9 eram iguais aos que já estavam no jogo e o `baby_dragon` saiu do Tripo como um quadro plano (a folha inteira), então não foi usado.
+
+### Os 20 com modelo Tripo próprio
+- Chegaram os que faltavam: **Glacien** (dragão de gelo), **Flarion** (raposa de fogo), **Petrun** (tartaruga de pedra com musgo) e **Nimbri** (nuvem fofa; veio no mesmo arquivo do Petrun e foi separado). Todos reduzidos mantendo a textura original.
+- Flarion e Nimbri não são mais montados em código (`PROC` vazio). As peles repintadas antigas `skins/0, 2, 6, 13` saíram.
+- Evolução desses quatro: brilho, anel e auréola na cor do elemento (`EVCROWN`).

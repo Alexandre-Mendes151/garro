@@ -6,6 +6,31 @@ Jogo de máquina de garra no navegador: mova a garra, aperte PEGAR e leve as pel
 Cada pelúcia tem tamanho e peso próprios, a garra tem três pontas e pode escorregar ou enroscar.
 Na coleção, as pelúcias capturadas aparecem em 3D e reagem ao toque (carinho, coçar, bravo, barriga pra cima).
 
+
+## Estrutura dos arquivos (a partir de 24/10)
+
+O jogo deixou de ser um `index.html` gigante. Agora:
+
+| Arquivo | O que tem |
+|---|---|
+| `index.html` | Só a estrutura da página (HTML) e um carregador pequeno. |
+| `css/garro.css` | Todo o visual. |
+| `js/garro.js` | Toda a lógica do jogo. |
+| `data/*.json` | **Conteúdo estático do jogo**: `pelucias.json` (lista, força, elementos, nomes das evoluções, pedras), `modelos.json` (ajustes dos modelos 3D), `textos.json`, `regras.json` (preços, decaimento, XP), `sprites*.json` e `fills.json` (imagens). |
+| `models/` | Modelos 3D e texturas. |
+| `supabase/` | Migrações e a função `sync-estado` (deploy automático pelo GitHub Actions ao dar push em `main`). |
+
+O carregador do `index.html` busca os `data/*.json` e só depois carrega `js/garro.js`; se algum arquivo falhar, aparece um aviso na tela em vez de tela branca.
+
+### Regras do projeto
+1. **Banco (Supabase "appgarro") guarda só ESTADO do jogador** (`profiles`, `player_state`, `collection`: moedas, vitórias, o que capturou). Nunca conteúdo do jogo, sprites, base64, textos ou configuração de pelúcias.
+2. **Conteúdo do jogo vai em arquivo separado versionado** (`data/*.json`, `js/*.js`), nunca inline gigante dentro do `index.html`.
+3. Antes de adicionar algo novo, decidir: é estado do jogador (Supabase) ou conteúdo do jogo (arquivo)?
+4. Repositório único: **github.com/joaobazanela/garro-app**. O repositório antigo Alexandre-Mendes151/garro não recebe mais commits.
+
+### Ainda guardado só no aparelho (falta levar para o Supabase)
+Moedas gastas/ganhas fora do servidor (loja, Gigante, venda de especiais e gigante, troca da máquina, batalha), inventário de comida e pedras, nível/XP/cuidado, gigantes capturados e evoluídos, limite de moedas da batalha.
+
 ## Jogar
 **Link:** https://alexandre-mendes151.github.io/garro/
 

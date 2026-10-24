@@ -260,7 +260,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
   <h2>Coleção <span id="count">0 de 35</span></h2>
   <div class="grid" id="grid"></div>
   <div class="detail" id="detail" hidden></div>
-  <div class="ver" id="verTag">versão 58 · 24/10 11:41</div>
+  <div class="ver" id="verTag">versão 58 · 24/10 11:52</div>
 <div class="foot"><button id="refill">+15 moedas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
 </section>
 
@@ -785,7 +785,7 @@ function renderShelf(focus){
   const g=$('grid');g.innerHTML='';let got=0;
   PLUSH.forEach(p=>{const n=coll[p.i]||0;if(n)got++;
     const s=document.createElement('button');s.className='slot'+(n?'':' lock');s.setAttribute('aria-label',n?p.name:'Pelúcia não capturada');
-    const stg=n&&p.i<CH0?careStage(p.i):0;s.innerHTML='<img src="'+p.img+'" alt=""><span>'+(n?evName(p.i,stg):'???')+'</span>'+(n>1?'<b>×'+n+'</b>':'')+(n?'<u>'+(stg?'★ ':'')+'NV '+lvOf(p.i)+'</u>':'');
+    const stg=n&&p.i<CH0?careStage(p.i):0;s.innerHTML='<img src="'+(stg===1&&EVOSPR[p.i]?EVOSPR[p.i].img:p.img)+'" alt=""><span>'+(n?evName(p.i,stg):'???')+'</span>'+(n>1?'<b>×'+n+'</b>':'')+(n?'<u>'+(stg?'★ ':'')+'NV '+lvOf(p.i)+'</u>':'');
     s.addEventListener('click',()=>{if(n){$('detail').hidden=true;openViewer(p.i)}else detail(p.i)});g.appendChild(s)});
   $('count').textContent=got+' de '+NPL;
   if(focus!==undefined)detail(focus);

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>window.GARRO_OFFLINE=1;window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange(){},signInWithOAuth:async()=>({error:1})},from:()=>{const q={select:()=>q,order:()=>q,limit:async()=>({data:null,error:1}),single:async()=>({data:null})};return q}})};</script>
 <style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Garro</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -10,7 +11,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js" integrity="sha384-OqQP3UcU7efkEYDRjGmQou2uEvzGFGRtwdYXTjnupeB9cWogSgQ4BOhyklFBYbBR" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <style>
 /* Layout: one lit arcade cabinet (marquee, glass window, control deck), then a 20-slot collection shelf. Single dark look. */
 :root{
@@ -269,7 +269,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
   <div class="grid" id="grid"></div>
   <div class="detail" id="detail" hidden></div>
   <div class="ver" id="verTag">versão 64 · 24/10 15:27</div>
-<div class="foot"><button id="refill">+15 moedas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
+<div class="foot"><button id="refill">+15 moedas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button" hidden>Ranking</button></div>
 </section>
 
 <div id="rankingPanel" hidden>
@@ -429,10 +429,7 @@ sb.auth.onAuthStateChange((event,s)=>{
 $('btnGoogleLogin').addEventListener('click',entrarComGoogle);
 $('btnRetryLogin').addEventListener('click',()=>showAuthState('Default'));
 
-(async()=>{
-  const {data:{session:s}}=await sb.auth.getSession();
-  if(s)await iniciarAposLogin();
-})();
+setTimeout(()=>{try{coll=JSON.parse(localStorage.getItem('garra-real')||'{}')||{}}catch(e){coll={}}$('authGate').hidden=true;$('gameRoot').hidden=false;hud();renderShelf();},0);
 
 /* ---------- sprites: bake a soft contact shadow once ---------- */
 function bakeP(p){
@@ -716,10 +713,10 @@ function stress(){return claw.held?claw.held.plush.g/claw.hold:0}
 
 function won(b){
   const p=b.plush;if(p.stone!==undefined){INV.st[p.stone]++;saveInv();roundWin=true;losses=0;banner(p.name+'!','Pedra rara! Use no bicho do mesmo elemento',true);fanfare();hud();return}
-  if(p.giant){coll[p.i]=(coll[p.i]||0)+1;saveX();GCOLL[p.i]=(GCOLL[p.i]||0)+1;saveG();shakeWin(10);boom();for(let k=0;k<3;k++)setTimeout(()=>puff(40+Math.random()*60,FLOOR-40,26,['#ffd23c','#ff5a8a','#5ad1ff','#8aff6a','#ffffff'],true),k*300);const c0=careOf(p.i);c0.xp+=60;saveCare();syncEstado('capture',{plushId:p.i}  );
+  if(p.giant){coll[p.i]=(coll[p.i]||0)+1;saveX();GCOLL[p.i]=(GCOLL[p.i]||0)+1;saveG();shakeWin(10);boom();for(let k=0;k<3;k++)setTimeout(()=>puff(40+Math.random()*60,FLOOR-40,26,['#ffd23c','#ff5a8a','#5ad1ff','#8aff6a','#ffffff'],true),k*300);const c0=careOf(p.i);c0.xp+=60;saveCare();try{localStorage.setItem('garra-real',JSON.stringify(coll))}catch(e){}
     roundWin=true;losses=0;banner('🏆 GIGANTE! '+p.name,'+60 XP · selo de gigante na coleção',true);fanfare();setTimeout(fanfare,700);renderShelf(p.i);hud();return}
   coll[p.i]=(coll[p.i]||0)+1;saveX();const dup=coll[p.i]>1,evo=p.i<CH0;if(dup){const c0=careOf(p.i);c0.xp+=evo?20:5;saveCare()}
-  syncEstado('capture',{plushId:p.i});
+  try{localStorage.setItem('garra-real',JSON.stringify(coll))}catch(e){}
   roundWin=true;losses=0;banner(p.name+'!',dup?(evo?'Repetida! +20 XP pra evoluir':'Repetida! 2 iguais = 1 moeda'):p.rare<=2?'Pelúcia rara!':'Caiu no prêmio',true);fanfare();renderShelf(p.i);hud();
 }
 
@@ -823,7 +820,7 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>{if(e.key==='ArrowLeft'&&dir<0||e.key==='ArrowRight'&&dir>0)dir=0});
 $('refill').addEventListener('click',()=>{
-  syncEstado('refill').then(r=>{if(r){coins=r.coins+bonus;hud()}});
+  coins+=15;hud();
   $('hint').textContent='Toque nas setas para jogar'
 });
 let arm=0;
@@ -831,7 +828,7 @@ $('reset').addEventListener('click',()=>{
   if(!arm){$('reset').textContent='Toque de novo para zerar';arm=setTimeout(()=>{arm=0;$('reset').textContent='Zerar coleção'},2500);return}
   clearTimeout(arm);arm=0;$('reset').textContent='Zerar coleção';coll={};try{localStorage.removeItem('garra-real')}catch(e){}$('detail').hidden=true;renderShelf();hud();
 });
-$('reset').disabled=true;
+
 $('reset').title='Em breve: ainda não sincroniza com a conta. Desativado por enquanto.';
 
 async function abrirRanking(){

@@ -572,7 +572,8 @@ function saveX(){try{localStorage.setItem(XKEY,JSON.stringify(coll));localStorag
 let bonus=0;try{bonus=+localStorage.getItem('garro-bonus')||0}catch(e){}
 // moedas infinitas só para quem desenvolve (conta Google). Na versão sem login: tocar 7x no contador de moedas liga/desliga.
 const DEV_EMAILS=['alexandre.et@gmail.com','joaobazanela@gmail.com'];let DEV=false;
-try{if(window.GARRO_OFFLINE&&localStorage.getItem('garro-dev')==='1')DEV=true}catch(e){}
+// cópia de teste dos devs (artefato): já abre com moedas infinitas; 7 toques no contador desligam
+try{const g=localStorage.getItem('garro-dev');if(window.GARRO_OFFLINE&&(g==='1'||(window.GARRO_DEVDEFAULT&&g!=='0')))DEV=true}catch(e){if(window.GARRO_DEVDEFAULT)DEV=true}
 const canPay=n=>DEV||coins>=n;
 function spend(n){if(DEV)return;coins-=n;bonus-=n;saveBonus()}
 function saveBonus(){try{localStorage.setItem('garro-bonus',String(bonus))}catch(e){}}

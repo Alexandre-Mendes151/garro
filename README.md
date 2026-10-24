@@ -123,3 +123,7 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - **Gigante nítido:** redesenhado no tamanho grande a partir da imagem original (antes era a pequena esticada) e sempre em pé, sem tombar.
 - **Sem pedra ou sem comida:** abre a loja com o aviso do que falta.
 - **Cansaço:** com a barra de Brincar cheia, apertar de novo deixa o bicho cansado; na terceira vez ele faz cara de cansado e deita de lado para descansar.
+
+### Correções: gigante capturado e evoluídos sem deformar
+- Gigante: enquanto está na garra ele atravessa o vidro e a divisória; se a garra o leva até a porta do prêmio, conta como capturado e cai pela portinhola. Testado com 8 gigantes diferentes: 8 capturados.
+- Formas evoluídas não dobram mais cabeça e cauda por dentro do modelo (isso esticava o rosto, como no Umbros Sombrio); elas se mexem inteiras.

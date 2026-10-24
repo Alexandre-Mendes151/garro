@@ -1867,7 +1867,7 @@ function bFx(from,to,el,crit){const F=BFX[el]||BFX.earth,fld=$('bFx');if(!fld)re
 /* ---------- movimento na luta ---------- */
 const DS='drop-shadow(0 8px 10px rgba(0,0,0,.5))';
 function bImg(sd){return $(sd?'bOpImg':'bMeImg')}
-const FACEL=new Set([3,6,7,8,9,15,17,18,19]);// sprites cuja cabeça olha para a esquerda
+const FACEL=new Set([1,3,5,7,9,15,17,18,19]);// sprites cuja cabeça olha para a esquerda
 function bA(sd,kf,o){if(bImg(sd).dataset.flip==='1')kf=kf.map(f=>Object.assign({},f,{transform:'scaleX(-1) '+(f.transform||'')}));return bImg(sd).animate(kf,o)}
 function bClear(){bImg(0).style.transformOrigin=bImg(1).style.transformOrigin='';for(const sd of[0,1]){const im=bImg(sd);im.getAnimations().forEach(a=>a.cancel())}$('bFx').querySelectorAll('.bconf').forEach(e=>e.remove())}
 function bIdle(){bClear();[0,1].forEach(sd=>{const im=bImg(sd);bA(sd,[{transform:'translateY(0) scale(1,1)'},{transform:'translateY(-5px) scale(.99,1.025)'},{transform:'translateY(0) scale(1,1)'}],{duration:1500+sd*260,iterations:Infinity,easing:'ease-in-out'})})}

@@ -127,3 +127,11 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 ### Correções: gigante capturado e evoluídos sem deformar
 - Gigante: enquanto está na garra ele atravessa o vidro e a divisória; se a garra o leva até a porta do prêmio, conta como capturado e cai pela portinhola. Testado com 8 gigantes diferentes: 8 capturados.
 - Formas evoluídas não dobram mais cabeça e cauda por dentro do modelo (isso esticava o rosto, como no Umbros Sombrio); elas se mexem inteiras.
+
+### Estado do jogador no Supabase (migração 0006)
+- Tabelas novas, só estado: `inventory` (comida e pedras), `plush_care` (XP e barras de cada pelúcia), `giants` (gigantes e se evoluíram). Leitura só da própria linha (RLS); escrita só pela `sync-estado`.
+- Ações novas na `sync-estado`: `buy`, `swap`, `giant_round_start`, `giant_capture`, `sell_giant`, `giant_evolve`, `use_stone`, `care`, `battle`, `import_local`. Preços e XP ficam no código das funções (precisam bater com `data/regras.json`).
+- **Corrige um erro antigo:** `rpc_round_start` e `rpc_refill` (0002) falhavam com "column reference coins is ambiguous", então a jogada nunca marcava `pending_round` e as capturas eram recusadas pelo servidor. Na 0006 as duas foram reescritas.
+- Na primeira entrada depois disso, o jogo manda UMA vez o que estava guardado no aparelho (`import_local`), com limites: até 50 comidas, 10 pedras de cada, XP até o máximo, 3 de cada pelúcia, 3 de cada gigante.
+- Sem login (demo/artefato) tudo continua salvo no aparelho, como antes.
+- Teste local das migrações: `supabase/tests/estado_do_jogador.sql`.

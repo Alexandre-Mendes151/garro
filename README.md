@@ -59,3 +59,6 @@ Cada golpe usa o elemento do bicho: raio (choque em zigue-zague), pedra/terra (a
 
 ## Movimento na luta
 Os dois lutadores ficam de frente (o da direita é espelhado). Respiram parados, investem para frente ao atacar (mais forte no crítico) e balançam ao levar o golpe. Quem perde deita acinzentado; quem ganha comemora com uma das três: três pulinhos, deitar e rolar ou correr em círculos, com estrelas e corações.
+
+## Loja e pedras raras
+Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A comida agora é item: cada vez que o bichinho come gasta 1 (começa com 3). As 6 pedras (Fogo, Ar, Terra, Planta, Fantasma, Psíquico) também aparecem raramente na máquina (cerca de 1% por pelúcia sorteada, no máximo uma por vez). Uso único: no bicho grande do mesmo elemento ela leva direto ao Nv 50 e evolui; depois a pedra some. Inventário e gastos ficam no aparelho (localStorage `garro-inv` e `garro-bonus`), sem servidor por enquanto.

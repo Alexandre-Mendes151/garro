@@ -115,3 +115,11 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - **Venda:** qualquer pelúcia pode ser vendida, até a última. Redondo = 1 moeda, bicho especial (que evolui) = 30 moedas (toque duas vezes para confirmar), pelúcia gigante = 40 moedas (botão próprio). **Servidor:** publicar `0005_venda_especiais.sql` e a `sync-estado` atualizada (aceita ids 0 a 42). A venda do gigante fica no aparelho por enquanto.
 - **Máquina pequena:** mais redondos (86% da pilha) e uma parede invisível sobre a divisória para nenhum bicho solto escorregar para o buraco do prêmio sem ser pego.
 - **Artefato:** as 14 formas evoluídas agora vão junto com o artefato (arquivos `models/*_evo.glb.txt`), sem depender de internet externa.
+
+### Evoluídos com lugar próprio, gigante na luta e cansaço
+- **Coleção:** quando um bicho evolui, ele ganha um lugar novo na seção "★ Evoluídos" (com a imagem e o nome da evolução). O lugar antigo continua com a forma de antes, marcado "evoluiu ↓".
+- **Gigante na luta:** quem tem a pelúcia gigante ganha o botão "⚔️ Lutar com o gigante 🏆" (mais forte). Às vezes o adversário também é gigante (12%). Na tela, o gigante aparece bem maior e o pequeno menor.
+- **Gigante evolui com 5 pedras** do elemento dele (botão na tela do bicho). Sem pedras suficientes, abre a loja.
+- **Gigante nítido:** redesenhado no tamanho grande a partir da imagem original (antes era a pequena esticada) e sempre em pé, sem tombar.
+- **Sem pedra ou sem comida:** abre a loja com o aviso do que falta.
+- **Cansaço:** com a barra de Brincar cheia, apertar de novo deixa o bicho cansado; na terceira vez ele faz cara de cansado e deita de lado para descansar.

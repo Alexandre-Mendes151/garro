@@ -68,3 +68,4 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - Ainda pedem modelo novo do Tripo para ficarem iguais na forma: Flarion e Nimbri (hoje feitos em código) e Petrun (o modelo atual é um golem de lava).
 - Fim do "quadriculado": Aquarim, Coralith, Lunaris, Voltik, Floriss, Zephyra, Lumina, Toxilys e Auren foram reduzidos de novo mantendo a textura original do Tripo (sem mosaico). Terranox ficou mais verde.
 - Arquivos de modelo e pele agora levam `?v=` no endereço, para o celular não mostrar a versão antiga guardada.
+- **Flarion** agora usa o corpo de raposa do Voltik pintado de fogo (`models/skins/2.jpg`), no lugar da raposa feita em código. Quando chegar um modelo próprio do Tripo, é só trocar o arquivo em `MODELS[2]`.

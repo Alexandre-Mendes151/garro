@@ -94,3 +94,9 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - Texturas da versão leve (artefato) subiram de 640 para 1024 px nos 14 modelos Tripo novos: não fica mais desfocado de perto.
 - Forma evoluída: sem auréola. Enquanto não chega o modelo evoluído do Tripo, o mesmo corpo ganha uma **pele evoluída** gerada no aparelho (`evoTex`): Petrun com mais musgo, Magmord mais escuro com lava, gelo mais azul, sombra mais roxa etc., além de ficar maior e com o anel/brilho.
 - Quando chegar o .glb da forma evoluída, basta colocar em `models/<nome>_evo.glb` e registrar em `EVOFILE[id]`; a tela troca de modelo sozinha ao evoluir.
+
+### Formas evoluídas com modelo próprio
+- 14 evoluções vieram do Tripo (cada arquivo trazia base + evolução; foi usada a evolução): Terranox Prime, Aquarim Leviatã, Zephyra Celestial, Umbros Sombrio, Glacien Ártico, Voltik Tempestade, Magmord Lava, Lunaris Solaris (sem o pedestal), Sylvorn Imperial, Sombril Abissal, Coralith Oceânico, Lumina Celestial, Toxilys Veneno e Auren Divino → `models/<nome>_evo.glb`, registradas em `EVOFILE` com pontos de cabeça/cauda em `NBE`.
+- Ao chegar no Nv 50 (ou usar a pedra) a tela troca para o modelo evoluído. Na luta aparece a imagem da forma evoluída (`EVOSPR`).
+- Ainda sem modelo evoluído (usam a pele evoluída): Flarion, Floriss, Draksel (o arquivo veio como cartão plano), Nimbri, Petrun e Ignovus.
+- O artefato do Claude não cabe mais 14 modelos dentro dele (limite de 16 MB): ele busca as evoluções no repositório público do demo pelo jsDelivr; se não conseguir, usa a pele evoluída.

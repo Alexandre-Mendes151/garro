@@ -79,6 +79,8 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .detail h3{margin:0 0 2px;font-size:16px;font-weight:900}
 .detail p{margin:0;color:var(--dim)}
 .detail .stats{color:var(--amber);font-weight:800;margin-top:4px}
+.mtabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0}.mtabs button{font:inherit;font-weight:900;font-size:13px;border-radius:12px;padding:8px 6px;background:#1a1016;color:#c9a9c0;border:1px solid #3a2434}.mtabs button.on{background:linear-gradient(#ffb23a,#e07a12);color:#2a1200;border-color:#ffcf6a}
+.window.giant{box-shadow:0 0 0 3px #ffb23a,0 0 26px rgba(255,178,58,.55)}
 .swapbtn{display:block;margin:8px auto 0;background:#2a1838;color:#ffd7ef;border:1px solid #6a3f7e;border-radius:999px;padding:8px 16px;font-weight:800;font-size:13px}.swapbtn:disabled{opacity:.45}
 .ver{text-align:center;color:var(--dim);font-size:10px;opacity:.6;margin:6px 0}
 .foot{display:flex;justify-content:space-between;gap:8px}
@@ -237,6 +239,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
     <button class="chip shopbtn" id="btnShop" type="button"><span>Loja</span><b>🛒</b></button>
     <button class="chip shopbtn" id="btnInv" type="button"><span>Itens</span><b>🎒</b></button>
   </div>
+  <div class="mtabs"><button id="mach1" class="on" type="button">🎪 Máquina · 1 🪙</button><button id="mach2" type="button">🦖 Gigante · 50 🪙</button></div>
   <div class="window">
     <canvas id="c" aria-label="Máquina de garra com pelúcias"></canvas>
     <div class="timer"><i id="bar"></i></div>
@@ -260,7 +263,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
   <h2>Coleção <span id="count">0 de 35</span></h2>
   <div class="grid" id="grid"></div>
   <div class="detail" id="detail" hidden></div>
-  <div class="ver" id="verTag">versão 60 · 24/10 13:19</div>
+  <div class="ver" id="verTag">versão 61 · 24/10 14:23</div>
 <div class="foot"><button id="refill">+15 moedas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
 </section>
 
@@ -482,27 +485,40 @@ function settlePile(){fill(PILE,FLOOR-60);for(let i=0;i<500;i++)Engine.update(en
 settlePile();
 // novos bichos caem devagar: 1 a cada 4 jogadas quando a pilha baixa; só repõe 3 de uma vez se estiver quase vazia
 let sinceDrop=0;
-function restock(){sinceDrop++;if(bodies.length<6){fill(Math.min(3,PILE-bodies.length),-60);sinceDrop=0}else if(bodies.length<13&&sinceDrop>=4){fill(1,-60);sinceDrop=0}}
+function restock(){if(MACH===2){if(!bodies.length)placeGiant();return}sinceDrop++;if(bodies.length<6){fill(Math.min(3,PILE-bodies.length),-60);sinceDrop=0}else if(bodies.length<13&&sinceDrop>=4){fill(1,-60);sinceDrop=0}}
 const SWAP_COST=10;
+/* ---------- segunda máquina: um bichinho gigante ---------- */
+let MACH=1;const GCOST=50,GK=2.4;
+function giantOf(i){const p=PLUSH[i],G=Object.create(p);G.giant=1;G.dw=p.dw*GK;G.dh=p.dh*GK;G.cx=p.cx*GK;G.cy=p.cy*GK;G.cm=Math.round(p.cm*GK);G.g=760+Math.round(Math.random()*100);G.tex=Math.max(.85,p.tex);
+  Object.defineProperty(G,'pad',{get:()=>(p.pad||10)*GK});G.verts=p.verts.map(v=>({x:v.x*GK,y:v.y*GK}));G.name=p.name;return G}
+function placeGiant(){const i=Math.floor(Math.random()*CH0),G=giantOf(i);addPlush(G,(DIV+W)/2+(Math.random()-.5)*40,FLOOR-140);for(let k=0;k<120;k++)Engine.update(engine,1000/60);
+  $('who').innerHTML='Gigante da vez: <b>'+G.name+'</b> <em>· '+G.cm+' cm</em>'}
+function setMachine(m){if(m===MACH)return;if(claw.state!=='ready'){banner('Espere a garra voltar');return}
+  MACH=m;const k=(m===2?1.7:1)/CS;CS=m===2?1.7:1;Body.scale(prongL,k,k);Body.scale(prongR,k,k);
+  for(const b of bodies)Composite.remove(world,b);bodies.length=0;if(m===2)placeGiant();else{settlePile();$('who').textContent='Mire bem no centro da pelúcia. As pesadas escorregam fácil.'}
+  $('mach1').classList.toggle('on',m===1);$('mach2').classList.toggle('on',m===2);document.querySelector('.window').classList.toggle('giant',m===2);
+  $('hint').textContent=m===2?'Máquina gigante: '+GCOST+' moedas por jogada':'Toque nas setas para colocar uma moeda';audio();click(m===2?300:600);hud()}
+
 function swapMachine(){if(claw.state!=='ready'){banner('Espere a garra voltar');return}
   if(!canPay(SWAP_COST)){banner('Moedas insuficientes','Trocar custa '+SWAP_COST+' 🪙');return}
-  spend(SWAP_COST);for(const b of bodies)Composite.remove(world,b);bodies.length=0;settlePile();sinceDrop=0;
+  spend(SWAP_COST);for(const b of bodies)Composite.remove(world,b);bodies.length=0;if(MACH===2)placeGiant();else settlePile();sinceDrop=0;
   audio();[523,659,784].forEach((f,k)=>setTimeout(()=>tone(f,.12,'triangle',.09),k*90));banner('Bichinhos trocados!',DEV?'grátis (dev)':'-'+SWAP_COST+' 🪙',true);hud()}
 
 /* ---------- claw ---------- */
+let CS=1;// escala da garra (1 = normal, maior na máquina gigante)
 const claw={x:HOME,y:REST,open:1,oL:1,oR:1,oB:1,lb:null,rb:null,bsnag:false,target:null,snag:false,state:'ready',t:0,held:null,link:null,force:0,hold:0,slipAt:-1,moving:0,hits:0};
 function setProngs(){
   for(const [b,s] of [[prongL,-1],[prongR,1]]){
-    const a=-.2+(s<0?claw.oL:claw.oR)*.82,th=-s*a,px=claw.x+s*9,py=claw.y+6;
-    Body.setPosition(b,{x:px-Math.sin(th)*20,y:py+Math.cos(th)*20});Body.setAngle(b,th);
+    const a=-.2+(s<0?claw.oL:claw.oR)*.82,th=-s*a,px=claw.x+s*9*CS,py=claw.y+6*CS;
+    Body.setPosition(b,{x:px-Math.sin(th)*20*CS,y:py+Math.cos(th)*20*CS});Body.setAngle(b,th);
   }
   const solid=claw.state==='down';prongL.isSensor=prongR.isSensor=!solid;
 }
 
-function tip(s,o){const a=-.2+o*.82,th=-s*a,lx=-s*8,ly=41;return{x:claw.x+s*9+lx*Math.cos(th)-ly*Math.sin(th),y:claw.y+6+lx*Math.sin(th)+ly*Math.cos(th)}}
+function tip(s,o){const a=-.2+o*.82,th=-s*a,lx=-s*8*CS,ly=41*CS;return{x:claw.x+s*9*CS+lx*Math.cos(th)-ly*Math.sin(th),y:claw.y+6*CS+lx*Math.sin(th)+ly*Math.cos(th)}}
 function beginClose(){
   const c=claw;c.lb=c.rb=null;c.snag=false;c.target=null;
-  for(let oy=0;oy<=60&&!c.target;oy+=4){const h=Query.point(bodies,{x:c.x,y:c.y+12+oy});if(h.length)c.target=h[0]}
+  for(let oy=0;oy<=60&&!c.target;oy+=4){const h=Query.point(bodies,{x:c.x,y:c.y+(12+oy)*CS});if(h.length)c.target=h[0]}
   if(!c.target)for(const s of[-1,1]){const h=Query.point(bodies,tip(s,s<0?c.oL:c.oR));if(h.length){c.target=h[0];break}}
   let n=0;for(const b of bodies)if(b!==c.target&&Math.abs(b.position.x-c.x)<60&&b.bounds.min.y<c.y+50)n++;
   c.bsnag=Math.random()<Math.min(.5,n*.12);
@@ -541,34 +557,54 @@ const rail=layer(x=>{
   for(let i=8;i<W;i+=16){x.fillStyle='rgba(255,236,200,.9)';x.beginPath();x.arc(i,4,1.6,0,7);x.fill()}
 });
 
-function metal(x,x0,x1){const g=ctx.createLinearGradient(x0,0,x1,0);g.addColorStop(0,'#55525a');g.addColorStop(.35,'#f2f0f4');g.addColorStop(.6,'#a19ea6');g.addColorStop(1,'#46434b');return g}
+function metal(x,x0,x1){const g=ctx.createLinearGradient(x0,0,x1,0);g.addColorStop(0,'#4a4750');g.addColorStop(.28,'#e9e7ee');g.addColorStop(.42,'#ffffff');g.addColorStop(.62,'#9c99a3');g.addColorStop(1,'#3e3b44');return g}
+// uma garra: braço curvo que abre para fora e fecha em gancho, com junta parafusada e ponta de borracha
+function prongPath(s,k){const p=[[-3.2,0],[3.2,0],[s*5+3.6*s,21],[-s*1.5+2.4*s,36],[-s*8,42.5],[-s*9.5,39.5],[-s*3.5-2*s,34.5],[s*5-3*s,22]];
+  ctx.beginPath();ctx.moveTo(-3.4,0);ctx.lineTo(3.4,0);ctx.quadraticCurveTo(s*9.5,12,s*7.4,22);ctx.quadraticCurveTo(s*4.2,33,-s*2,38.5);ctx.quadraticCurveTo(-s*6,41.5,-s*9.2,41.8);ctx.lineTo(-s*9.6,38.6);
+  ctx.quadraticCurveTo(-s*5,37,-s*2.8,34.2);ctx.quadraticCurveTo(s*1.4,29,s*2.4,22);ctx.quadraticCurveTo(s*3.6,10,-3.4,0);ctx.closePath()}
 function drawProng(s,depth){
-  const a=-.2+(s<0?claw.oL:claw.oR)*.82,px=claw.x+s*9,py=claw.y+6;
-  ctx.save();ctx.translate(px,py);ctx.rotate(-s*a);
-  ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.strokeStyle=depth?'#5d5962':'#2b282e';ctx.lineWidth=depth?6:8;
-  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(s*5,22);ctx.lineTo(-s*3,38);ctx.lineTo(-s*8,41);ctx.stroke();
-  if(!depth){ctx.strokeStyle=metal(0,-4,4);ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(s*5,22);ctx.lineTo(-s*3,38);ctx.lineTo(-s*8,41);ctx.stroke();
-    ctx.fillStyle='#d8d4dc';ctx.beginPath();ctx.arc(0,0,3,0,7);ctx.fill()}
+  const a=-.2+(s<0?claw.oL:claw.oR)*.82;
+  ctx.save();ctx.translate(claw.x+s*9*CS,claw.y+6*CS);ctx.scale(CS,CS);ctx.rotate(-s*a);
+  if(depth){ctx.fillStyle='#4a4650';prongPath(s);ctx.fill();ctx.restore();return}
+  ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=4;ctx.shadowOffsetY=2;
+  ctx.fillStyle='#242128';prongPath(s);ctx.fill();ctx.shadowColor='transparent';
+  ctx.save();ctx.scale(.84,.94);ctx.translate(s*.6,.6);const g=ctx.createLinearGradient(-6,0,8,0);g.addColorStop(0,'#5d5a63');g.addColorStop(.4,'#f6f5f9');g.addColorStop(.7,'#a9a6b0');g.addColorStop(1,'#56535c');
+  ctx.fillStyle=g;prongPath(s);ctx.fill();ctx.restore();
+  // ponta de borracha
+  ctx.fillStyle='#1c1a1f';ctx.beginPath();ctx.ellipse(-s*8.6,40.4,3.1,2.3,s*.4,0,7);ctx.fill();
+  // junta do meio
+  ctx.fillStyle='#2b2830';ctx.beginPath();ctx.arc(s*5.6,22,2.6,0,7);ctx.fill();ctx.fillStyle='#d9d6de';ctx.beginPath();ctx.arc(s*5.6,22,1.3,0,7);ctx.fill();
+  // pino de cima
+  ctx.fillStyle='#2b2830';ctx.beginPath();ctx.arc(0,0,3.6,0,7);ctx.fill();ctx.fillStyle='#e9e7ee';ctx.beginPath();ctx.arc(0,0,1.8,0,7);ctx.fill();
   ctx.restore();
 }
 function drawClaw(){
-  const {x,y}=claw;
-  // carriage
-  let g=ctx.createLinearGradient(0,6,0,22);g.addColorStop(0,'#d9d6de');g.addColorStop(1,'#4c4952');
-  ctx.fillStyle=g;ctx.fillRect(x-20,6,40,14);ctx.fillStyle='#ff4f8b';ctx.fillRect(x-20,18,40,3);
-  // cable
-  ctx.strokeStyle='#1b181d';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(x,20);ctx.lineTo(x,y-18);ctx.stroke();
-  ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x+.6,20);ctx.lineTo(x+.6,y-18);ctx.stroke();
-  // back prong (perspective)
-  const L=24+(1-claw.oB)*16;ctx.lineCap='round';ctx.lineJoin='round';
-  for(const [col,lw] of [['#3a363f',7],['#9a96a0',3.5]]){ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(x,y+2);ctx.lineTo(x+2,y+2+L*.6);ctx.lineTo(x-1,y+2+L);ctx.stroke()}
+  const {x,y}=claw,k=CS;
+  // carrinho no trilho de cima
+  let g=ctx.createLinearGradient(0,4,0,24);g.addColorStop(0,'#f0eef4');g.addColorStop(.5,'#8e8b95');g.addColorStop(1,'#3a3740');
+  ctx.fillStyle=g;if(ctx.roundRect){ctx.beginPath();ctx.roundRect(x-24,5,48,16,4);ctx.fill()}else ctx.fillRect(x-24,5,48,16);
+  ctx.fillStyle='#ff7a1a';ctx.fillRect(x-24,15,48,3);
+  for(const wx of[-15,15]){ctx.fillStyle='#1d1b20';ctx.beginPath();ctx.arc(x+wx,6,4,0,7);ctx.fill();ctx.fillStyle='#b9b6bf';ctx.beginPath();ctx.arc(x+wx,6,1.6,0,7);ctx.fill()}
+  ctx.fillStyle='#2a272e';ctx.fillRect(x-4,20,8,4);
+  // cabo de aço trançado
+  const top=24,bot=y-24*k;ctx.strokeStyle='#1b181d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bot);ctx.stroke();
+  ctx.strokeStyle='rgba(220,220,230,.55)';ctx.lineWidth=1;ctx.beginPath();for(let yy=top;yy<bot;yy+=4){ctx.moveTo(x-1.4,yy);ctx.lineTo(x+1.4,yy+2.6)}ctx.stroke();
+  // garra de trás (perspectiva)
+  const L=24+(1-claw.oB)*16;ctx.save();ctx.translate(x,y+4*k);ctx.scale(k,k);ctx.fillStyle='#3a3640';ctx.beginPath();ctx.moveTo(-2.6,0);ctx.lineTo(2.6,0);ctx.lineTo(2,L*.82);ctx.quadraticCurveTo(1,L,-1.2,L);ctx.lineTo(-2.2,L*.82);ctx.closePath();ctx.fill();ctx.fillStyle='#1c1a1f';ctx.beginPath();ctx.ellipse(0,L-1,2.2,1.6,0,0,7);ctx.fill();ctx.restore();
   drawProng(-1);drawProng(1);
-  // head
-  ctx.fillStyle=metal(0,x-15,x+15);ctx.beginPath();
-  if(ctx.roundRect)ctx.roundRect(x-15,y-20,30,24,[8,8,5,5]);else ctx.rect(x-15,y-20,30,24);ctx.fill();
-  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-15,y-2,30,3);
-  ctx.fillStyle=claw.state==='move'?'#ff4f8b':'#5fd39b';ctx.beginPath();ctx.arc(x,y-10,2.6,0,7);ctx.fill();
+  // motor: cilindro cromado com faixa laranja e tampa
+  ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+  ctx.fillStyle='#2a272e';ctx.beginPath();ctx.ellipse(0,-24,9,3.4,0,0,7);ctx.fill();
+  ctx.fillStyle=metal(0,-16,16);if(ctx.roundRect){ctx.beginPath();ctx.roundRect(-16,-23,32,20,[6,6,3,3]);ctx.fill()}else ctx.fillRect(-16,-23,32,20);
+  const ob=ctx.createLinearGradient(-16,0,16,0);ob.addColorStop(0,'#a8410a');ob.addColorStop(.35,'#ffb23a');ob.addColorStop(.7,'#ff7a1a');ob.addColorStop(1,'#8a3408');
+  ctx.fillStyle=ob;ctx.fillRect(-16,-15,32,5);
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillRect(-9,-21,3,16);
+  // aro de baixo com os pinos
+  ctx.fillStyle='#232026';if(ctx.roundRect){ctx.beginPath();ctx.roundRect(-14,-4,28,9,3);ctx.fill()}else ctx.fillRect(-14,-4,28,9);
+  ctx.fillStyle='#77737d';ctx.fillRect(-14,-4,28,2);
+  for(const sx of[-9,0,9]){ctx.fillStyle='#cfccd4';ctx.beginPath();ctx.arc(sx,1,1.4,0,7);ctx.fill()}
+  ctx.fillStyle=claw.state==='move'?'#ff4f8b':'#5fd39b';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=6;ctx.beginPath();ctx.arc(10,-19,2.2,0,7);ctx.fill();
+  ctx.restore();
 }
 function drawPlush(b){
   const p=b.plush,img=p.baked;
@@ -610,6 +646,9 @@ function showGrab(p,force,closed){
 
 function start(){
   if(claw.state!=='ready')return false;
+  if(MACH===2){if(!canPay(GCOST)){$('hint').textContent='A máquina gigante custa '+GCOST+' moedas por jogada.';banner('Moedas insuficientes','Gigante: '+GCOST+' 🪙 por jogada');return false}
+    claw.state='move';roundTime=ROUND;roundWin=false;spend(GCOST);claw.force=losses>=3?1250+Math.random()*150:700+Math.random()*600;
+    $('hint').textContent='Mire no meio do gigante e aperte PEGAR';click(500);hud();return true}
   if(!DEV&&coins<=0){$('hint').textContent='Sem moedas. Toque em +15 moedas abaixo.';banner('Sem moedas');return false}
   claw.state='move';roundTime=ROUND;roundWin=false;
   if(!DEV){const useBonus=bonus>0&&coins-bonus<=0;coins--;
@@ -623,9 +662,10 @@ function drop(){if(claw.state!=='move')return;claw.state='down';claw.press=0;dir
 function attach(b,hits,mult,closed){mult=mult||1;
   const p=b.plush,dx=Math.abs(b.position.x-claw.x),half=p.dw/2;
   const centered=1-Math.min(1,dx/(half*.9));
-  const grip=claw.force*p.tex*(.3+.45*centered+.25*Math.min(1,hits/18))*mult;
+  let grip=claw.force*p.tex*(.3+.45*centered+.25*Math.min(1,hits/18))*mult;
+  if(p.giant)grip*=1.45;// garra grande da máquina gigante aperta mais
   claw.hold=grip;claw.held=b;
-  const gp={x:claw.x,y:claw.y+30};
+  const gp={x:claw.x,y:claw.y+30*CS};
   claw.link=Constraint.create({pointA:{x:gp.x,y:gp.y},bodyB:b,pointB:{x:gp.x-b.position.x,y:gp.y-b.position.y},length:0,stiffness:.12,damping:.08});
   Composite.add(world,claw.link);
   b.collisionFilter.mask=CAT_PLUSH|CAT_WALL;b.frictionAir=.03;
@@ -635,6 +675,8 @@ function attach(b,hits,mult,closed){mult=mult||1;
 function release(reason){
   const b=claw.held;if(!b)return;
   Composite.remove(world,claw.link);claw.link=null;claw.held=null;b.frictionAir=.012;
+  // gigante solto em cima da porta do prêmio: cai pela portinhola (é largo demais para o buraco)
+  if(!reason&&b.plush.giant&&claw.x<DIV){b.collisionFilter.mask=0;return}
   setTimeout(()=>{b.collisionFilter.mask=CAT_PLUSH|CAT_WALL|CAT_PRONG},900);
   if(reason==='slip'){banner(claw.snag?'Enroscou!':'Escorregou!',b.plush.name);thud()}
   if(reason==='heavy'){banner('Pesado demais!',b.plush.name+' · '+b.plush.g+' g');thud()}
@@ -643,6 +685,8 @@ function stress(){return claw.held?claw.held.plush.g/claw.hold:0}
 
 function won(b){
   const p=b.plush;if(p.stone!==undefined){INV.st[p.stone]++;saveInv();roundWin=true;losses=0;banner(p.name+'!','Pedra rara! Use no bicho do mesmo elemento',true);fanfare();hud();return}
+  if(p.giant){coll[p.i]=(coll[p.i]||0)+1;saveX();const c0=careOf(p.i);c0.xp+=60;saveCare();syncEstado('capture',{plushId:p.i}  );
+    roundWin=true;losses=0;banner('GIGANTE! '+p.name,'+60 XP · foi para a coleção',true);fanfare();setTimeout(fanfare,700);renderShelf(p.i);hud();return}
   coll[p.i]=(coll[p.i]||0)+1;saveX();const dup=coll[p.i]>1,evo=p.i<CH0;if(dup){const c0=careOf(p.i);c0.xp+=evo?20:5;saveCare()}
   syncEstado('capture',{plushId:p.i});
   roundWin=true;losses=0;banner(p.name+'!',dup?(evo?'Repetida! +20 XP pra evoluir':'Repetida! 2 iguais = 1 moeda'):p.rare<=2?'Pelúcia rara!':'Caiu no prêmio',true);fanfare();renderShelf(p.i);hud();
@@ -657,9 +701,9 @@ function step(){
     if(roundTime<=0)drop();
   }else if(c.state==='down'){
     c.y+=2.2;
-    const pts=[-12,-6,0,6,12].map(o=>({x:c.x+o,y:c.y+6})).concat([tip(-1,c.oL),tip(1,c.oR),{x:c.x,y:c.y+28}]);
+    const pts=[-12,-6,0,6,12].map(o=>({x:c.x+o*CS,y:c.y+6*CS})).concat([tip(-1,c.oL),tip(1,c.oR),{x:c.x,y:c.y+28*CS}]);
     // like a real claw it keeps pushing into the soft pile a little before closing, so the prongs sink around the plush
-    let floor=c.y>=FLOOR-44,center=Query.point(bodies,{x:c.x,y:c.y+34}).length>0,side=false;for(const pt of pts)if(pt.y>=FLOOR)floor=true;else if(Query.point(bodies,pt).length)side=true;
+    let floor=c.y>=FLOOR-44*CS,center=Query.point(bodies,{x:c.x,y:c.y+34*CS}).length>0,side=false;for(const pt of pts)if(pt.y>=FLOOR)floor=true;else if(Query.point(bodies,pt).length)side=true;
     if(side||center)c.press=(c.press||0)+(center?3.2:2.2);
     if(floor||c.press>(center?14:22)){c.state='close';c.t=0;c.press=0;hum(false);click(220);beginClose()}
   }else if(c.state==='close'){
@@ -670,7 +714,7 @@ function step(){
     c.oB=Math.max(c.bsnag?.55:0,c.oB-.022);c.open=Math.min(c.oL,c.oR);
     if(c.t>50&&(c.oL<=0||c.lb)&&(c.oR<=0||c.rb)){
       const closed=(c.lb?0:1)+(c.rb?0:1)+(c.bsnag?0:1),t=c.target;c.snag=closed<3;
-      let n=0;if(t)for(let ox=-14;ox<=14;ox+=4)for(let oy=10;oy<=46;oy+=6)if(Query.point([t],{x:c.x+ox,y:c.y+oy}).length)n++;
+      let n=0;if(t)for(let ox=-14;ox<=14;ox+=4)for(let oy=10;oy<=46;oy+=6)if(Query.point([t],{x:c.x+ox*CS,y:c.y+oy*CS}).length)n++;
       if(t&&n>=4)attach(t,n,[0,.12,.5,1][closed],closed);
       else{showGrab(null,c.force,t);if(c.snag&&t)banner('Enroscou!','Uma ponta prendeu na vizinha')}
       c.state='up';hum(true);
@@ -699,11 +743,13 @@ function step(){
       hud();
     }
   }
-  if(c.link){c.link.pointA.x=c.x;c.link.pointA.y=c.y+30}
+  if(c.link){c.link.pointA.x=c.x;c.link.pointA.y=c.y+30*CS}
   setProngs();
   Engine.update(engine,1000/60);
   for(let i=bodies.length-1;i>=0;i--){const b=bodies[i];
-    if(b.position.y>H+60){Composite.remove(world,b);bodies.splice(i,1);if(b.position.x<DIV+20)won(b)}}
+    if(b.position.y>H+60){Composite.remove(world,b);bodies.splice(i,1);if(b.position.x<DIV+20)won(b)}
+    else if(b.plush.giant&&b!==claw.held&&b.position.x<DIV+30&&b.position.y>230){Composite.remove(world,b);bodies.splice(i,1);won(b)}
+    else if(b.plush.giant&&b.position.x>=DIV+30&&b.position.y>FLOOR+10){Body.setPosition(b,{x:Math.min(W-90,b.position.x),y:FLOOR-130});Body.setVelocity(b,{x:0,y:0})}}
 }
 function draw(){
   ctx.drawImage(back,0,0,W,H);
@@ -1238,7 +1284,7 @@ function evoTex(i,map){if(EVT[i])return EVT[i];const img=map.image;if(!img||!img
     d[p]=Math.max(0,Math.min(255,r*255));d[p+1]=Math.max(0,Math.min(255,g*255));d[p+2]=Math.max(0,Math.min(255,b*255))}
   x.putImageData(D,0,0);const t=new THREE.CanvasTexture(cv);t.flipY=map.flipY;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.wrapS=map.wrapS;t.wrapT=map.wrapT;return EVT[i]=t}
 function applyEvoTex(i){const C=V.C;if(!C||!C.obj)return;C.obj.traverse(o=>{if(o.isMesh&&!o.userData.keep&&o.userData.baseMap){o.material.map=evoTex(i,o.userData.baseMap);o.material.needsUpdate=true}})}
-const ASSETV='60';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
+const ASSETV='61';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
   new THREE.TextureLoader().load(src,t=>{t.flipY=false;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;res(t)},undefined,()=>res(null))})}
 function dropTail(g,m){const w=g.attributes.uv2;if(!w)return g;g=g.clone();const p=g.attributes.position,B=m.TA;
   for(let i=0;i<p.count;i++){const k=w.getX(i);if(k<=0)continue;const x=p.getX(i),y=p.getY(i),z=p.getZ(i);p.setXYZ(i,x+(B[0]+(x-B[0])*.1-x)*k,y+(B[1]+(y-B[1])*.1-y)*k,z+(B[2]+(z-B[2])*.1-z)*k)}
@@ -1875,6 +1921,7 @@ async function sellDup(){const i=V.cur;if(i===undefined||i<CH0)return;const n=co
   hud();renderShelf();renderSell(i);if(V.open)refreshVStats(i)}
 $('cSell').addEventListener('click',sellDup);
 $('btnSwap').addEventListener('click',swapMachine);
+$('mach1').addEventListener('click',()=>setMachine(1));$('mach2').addEventListener('click',()=>setMachine(2));
 {let tc=0,tt=0;$('coins').parentElement.addEventListener('click',()=>{if(!window.GARRO_OFFLINE)return;const now=Date.now();if(now-tt>1500)tc=0;tt=now;if(++tc>=7){tc=0;DEV=!DEV;try{localStorage.setItem('garro-dev',DEV?'1':'0')}catch(e){}banner(DEV?'Modo dev: moedas infinitas':'Modo dev desligado');hud()}})}
 
 /* ---------- loja ---------- */

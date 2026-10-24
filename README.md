@@ -104,3 +104,8 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 ### Luta cara a cara (definitivo)
 - As imagens da luta agora são próprias (`BSPR` para as 43 formas normais, `BSPRE` para as 14 evoluídas): todas desenhadas de perfil **olhando para a direita**. O bicho da esquerda usa a imagem como está e o da direita é sempre espelhado, então não depende mais de adivinhar para que lado cada modelo olha. Testado nas 1806 duplas (metade com formas evoluídas).
 - A coleção usa as mesmas imagens evoluídas.
+
+### Garra nova e Máquina Gigante
+- **Garra mais realista** (no estilo da máquina 3D): carrinho no trilho com rodinhas, cabo de aço trançado, motor cromado com faixa laranja e luz, aro com pinos e três garras curvas com junta parafusada e ponta de borracha. A física continua a mesma.
+- **Máquina Gigante:** abas acima do vidro trocam entre a máquina normal (1 moeda) e a Gigante (**50 moedas** por jogada, `GCOST`). Nela fica um único bichinho grande (2,4×), sorteado entre os 20; a garra fica maior (`CS`). Pegou: vai para a coleção com +60 XP e cai outro gigante. "Trocar bichinhos" (10 moedas) sorteia outro gigante. Em teste com mira boa: 3 vitórias em 10 jogadas.
+- As 50 moedas da Gigante são descontadas no aparelho (como a loja), até o servidor ganhar essa ação.

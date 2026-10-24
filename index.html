@@ -80,7 +80,9 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .detail p{margin:0;color:var(--dim)}
 .detail .stats{color:var(--amber);font-weight:800;margin-top:4px}
 .mtabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0}.mtabs button{font:inherit;font-weight:900;font-size:13px;border-radius:12px;padding:8px 6px;background:#1a1016;color:#c9a9c0;border:1px solid #3a2434}.mtabs button.on{background:linear-gradient(#ffb23a,#e07a12);color:#2a1200;border-color:#ffcf6a}
-.window.giant{box-shadow:0 0 0 3px #ffb23a,0 0 26px rgba(255,178,58,.55)}
+.window.giant{animation:gpulse 1.2s ease-in-out infinite}@keyframes gpulse{0%,100%{box-shadow:0 0 0 3px #ffb23a,0 0 18px rgba(255,178,58,.45)}50%{box-shadow:0 0 0 3px #fff1b0,0 0 34px rgba(255,200,80,.85)}}
+.gsign{margin:2px auto 6px;width:max-content;padding:4px 18px;border-radius:10px;background:linear-gradient(#ffe08a,#e8a020);color:#3a1a00;font-weight:900;letter-spacing:.18em;font-size:15px;box-shadow:0 0 0 2px #7a4a08,0 0 18px rgba(255,200,80,.7);animation:gsign 1s steps(2) infinite}@keyframes gsign{50%{filter:brightness(1.25)}}
+.gbadge{position:absolute;top:2px;left:4px;font-size:12px;font-style:normal}
 .swapbtn{display:block;margin:8px auto 0;background:#2a1838;color:#ffd7ef;border:1px solid #6a3f7e;border-radius:999px;padding:8px 16px;font-weight:800;font-size:13px}.swapbtn:disabled{opacity:.45}
 .ver{text-align:center;color:var(--dim);font-size:10px;opacity:.6;margin:6px 0}
 .foot{display:flex;justify-content:space-between;gap:8px}
@@ -240,6 +242,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
     <button class="chip shopbtn" id="btnInv" type="button"><span>Itens</span><b>🎒</b></button>
   </div>
   <div class="mtabs"><button id="mach1" class="on" type="button">🎪 Máquina · 1 🪙</button><button id="mach2" type="button">🦖 Gigante · 50 🪙</button></div>
+  <div class="gsign" id="gsign" hidden>★ GIGANTE ★</div>
   <div class="window">
     <canvas id="c" aria-label="Máquina de garra com pelúcias"></canvas>
     <div class="timer"><i id="bar"></i></div>
@@ -263,7 +266,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
   <h2>Coleção <span id="count">0 de 35</span></h2>
   <div class="grid" id="grid"></div>
   <div class="detail" id="detail" hidden></div>
-  <div class="ver" id="verTag">versão 61 · 24/10 14:23</div>
+  <div class="ver" id="verTag">versão 62 · 24/10 14:49</div>
 <div class="foot"><button id="refill">+15 moedas</button><button id="reset">Zerar coleção</button><button id="btnRanking" type="button">Ranking</button></div>
 </section>
 
@@ -279,7 +282,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
     <button class="vnav prev" id="vPrev" aria-label="Pelúcia anterior">‹</button><button class="vnav next" id="vNext" aria-label="Próxima pelúcia">›</button>
     <div class="vmood" id="vMood" aria-live="polite"></div><div class="vflash" id="vFlash"></div><div class="vevo" id="vEvo"></div></div>
   <div class="vfoot"><div class="care" id="care"><div class="cline"><b id="cStage"></b><span id="cXp"></span></div><div class="cxp"><i id="cXpBar"></i></div>
-    <div class="cbtns"><button class="cb" id="cFeed"><span>🍓 Comida</span><em><i id="mF"></i></em></button><button class="cb" id="cPet"><span>🤍 Carinho</span><em><i id="mL"></i></em></button><button class="cb" id="cPlay"><span>🎾 Brincar</span><em><i id="mP"></i></em></button></div><div class="crow"><button class="cb bat" id="cBat">⚔️ Batalhar</button><button class="cb sell" id="cSell" hidden></button><button class="cb stone" id="cStone" hidden></button></div></div><div class="vpow" id="vPow"></div><p class="vstats" id="vStats"></p><p id="vDesc"></p><button class="vhelp" id="vHelp" aria-expanded="false">Como brincar <b>▾</b></button>
+    <div class="cbtns"><button class="cb" id="cFeed"><span>🍓 Comida</span><em><i id="mF"></i></em></button><button class="cb" id="cPet"><span>🤍 Carinho</span><em><i id="mL"></i></em></button><button class="cb" id="cPlay"><span>🎾 Brincar</span><em><i id="mP"></i></em></button></div><div class="crow"><button class="cb bat" id="cBat">⚔️ Batalhar</button><button class="cb sell" id="cSell" hidden></button><button class="cb sell" id="cSellG" hidden></button><button class="cb stone" id="cStone" hidden></button></div></div><div class="vpow" id="vPow"></div><p class="vstats" id="vStats"></p><p id="vDesc"></p><button class="vhelp" id="vHelp" aria-expanded="false">Como brincar <b>▾</b></button>
     <div class="gest" id="gest" hidden><span>Arraste: girar</span><span>Toque na cabeça: carinho</span><span>Toque no corpo: coçar</span><span>3 toques rápidos: fica bravo</span><span>Segure: barriga pra cima</span></div></div>
 </div>
 </div>
@@ -451,7 +454,7 @@ const STONE_OF=i=>{const e=ELEM[i];return ['embers','lava'].includes(e)?0:['clou
 /* ---------- physics world ---------- */
 const engine=Engine.create();engine.gravity.y=1;engine.positionIterations=8;engine.velocityIterations=6;
 const world=engine.world;
-const CAT_PLUSH=1,CAT_WALL=2,CAT_PRONG=4;
+const CAT_PLUSH=1,CAT_WALL=2,CAT_PRONG=4,CAT_GUARD=8;
 const wallOpts={isStatic:true,friction:.9,collisionFilter:{category:CAT_WALL}};
 const walls=[
   Bodies.rectangle(DIV+(W-DIV)/2,FLOOR+20,W-DIV,40,wallOpts),
@@ -463,17 +466,19 @@ Composite.add(world,walls);
 const prongL=Bodies.rectangle(0,0,7,40,{isStatic:true,isSensor:true,collisionFilter:{category:CAT_PRONG}});
 const prongR=Bodies.rectangle(0,0,7,40,{isStatic:true,isSensor:true,collisionFilter:{category:CAT_PRONG}});
 Composite.add(world,[prongL,prongR]);
+// parede invisível em cima da divisória: só o bicho que está na garra passa por ela
+const guard=Bodies.rectangle(DIV,(80+DIVTOP)/2,8,DIVTOP-80,{isStatic:true,friction:.2,collisionFilter:{category:CAT_GUARD}});Composite.add(world,guard);
 
 let bodies=[];
 function addPlush(p,x,y){
   const b=Bodies.fromVertices(x,y,[p.verts.map(v=>({x:v.x,y:v.y}))],{friction:.85,frictionStatic:1.2,frictionAir:.012,restitution:.04,
-    collisionFilter:{category:CAT_PLUSH,mask:CAT_PLUSH|CAT_WALL|CAT_PRONG}},true);
+    collisionFilter:{category:CAT_PLUSH,mask:CAT_PLUSH|CAT_WALL|CAT_PRONG|CAT_GUARD}},true);
   Body.setMass(b,p.g/100);Body.setAngle(b,(Math.random()-.5)*.6);
   b.plush=p;bodies.push(b);Composite.add(world,b);return b;
 }
 const PILE=16;
 function pickPlush(cnt){
-  const round=Math.random()<.72;let pool=PLUSH.filter(p=>(p.i>=CH0)===round&&(cnt[p.i]||0)<(round?3:1));if(!pool.length)pool=PLUSH.filter(p=>(cnt[p.i]||0)<1);if(!pool.length)pool=PLUSH;
+  const round=Math.random()<.86;let pool=PLUSH.filter(p=>(p.i>=CH0)===round&&(cnt[p.i]||0)<(round?3:1));if(!pool.length)pool=PLUSH.filter(p=>(cnt[p.i]||0)<1);if(!pool.length)pool=PLUSH;
   let t=0;pool.forEach(p=>t+=p.rare);let r=Math.random()*t;for(const p of pool){r-=p.rare;if(r<0)return p}return pool[0];
 }
 function fill(n,fromY){
@@ -489,14 +494,30 @@ function restock(){if(MACH===2){if(!bodies.length)placeGiant();return}sinceDrop+
 const SWAP_COST=10;
 /* ---------- segunda máquina: um bichinho gigante ---------- */
 let MACH=1;const GCOST=50,GK=2.4;
+let FX=[],DECOR=[];
+function puff(x,y,n,cols,up){for(let k=0;k<n;k++)FX.push({x:x+(Math.random()-.5)*60,y,vx:(Math.random()-.5)*(up?5:3.4),vy:-(up?2+Math.random()*4:Math.random()*1.6),r:up?3+Math.random()*3:5+Math.random()*9,life:0,max:50+Math.random()*40,col:cols[k%cols.length],g:up?.12:-.01})}
+function shakeWin(px){const w=document.querySelector('.window');if(w&&w.animate)w.animate([{transform:'translate(0,0)'},{transform:`translate(${px}px,${px*.6}px)`},{transform:`translate(${-px}px,${-px*.4}px)`},{transform:`translate(${px*.6}px,${px*.3}px)`},{transform:`translate(${-px*.3}px,0)`},{transform:'translate(0,0)'}],{duration:480})}
+function boom(){tone(46,.7,'sine',.4);tone(64,.45,'triangle',.22);setTimeout(()=>tone(38,.5,'sine',.25),90)}
+function drawFX(){for(let i=FX.length-1;i>=0;i--){const f=FX[i];f.life++;f.x+=f.vx;f.y+=f.vy;f.vy+=f.g;f.vx*=.97;const a=1-f.life/f.max;if(a<=0){FX.splice(i,1);continue}
+  ctx.globalAlpha=a*(f.g<0?.5:.95);ctx.fillStyle=f.col;ctx.beginPath();ctx.arc(f.x,f.y,f.r*(f.g<0?1+f.life/f.max:1),0,7);ctx.fill()}ctx.globalAlpha=1}
+function drawGiantDecor(){
+  for(const d of DECOR){const p=PLUSH[d.i];if(!p.baked)continue;ctx.drawImage(p.baked,d.x-p.dw/2-p.pad,FLOOR-p.dh-p.pad+4,p.dw+p.pad*2,p.dh+p.pad*2)}
+  // régua no vidro
+  const x0=W-12;ctx.strokeStyle='rgba(255,230,160,.55)';ctx.fillStyle='rgba(255,230,160,.75)';ctx.lineWidth=1;ctx.font='700 8px Nunito, sans-serif';ctx.textAlign='right';
+  ctx.beginPath();ctx.moveTo(x0,FLOOR);ctx.lineTo(x0,FLOOR-100*PXCM);ctx.stroke();
+  for(let cm=0;cm<=100;cm+=5){const y=FLOOR-cm*PXCM,big=cm%20===0;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x0-(big?8:4),y);ctx.stroke();if(big&&cm)ctx.fillText(cm+' cm',x0-10,y+3)}}
+const backG=layer(x=>{let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(30,26,70,.62)');g.addColorStop(1,'rgba(10,8,30,.7)');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.globalAlpha=.07;x.strokeStyle='#ffd27a';for(let i=-H;i<W+H;i+=34){x.beginPath();x.moveTo(i,0);x.lineTo(i+H,H);x.stroke()}x.globalAlpha=1;
+  g=x.createRadialGradient(W*.62,0,10,W*.62,0,H*.9);g.addColorStop(0,'rgba(255,214,120,.34)');g.addColorStop(1,'rgba(255,214,120,0)');x.fillStyle=g;x.fillRect(0,0,W,H)});
 function giantOf(i){const p=PLUSH[i],G=Object.create(p);G.giant=1;G.dw=p.dw*GK;G.dh=p.dh*GK;G.cx=p.cx*GK;G.cy=p.cy*GK;G.cm=Math.round(p.cm*GK);G.g=760+Math.round(Math.random()*100);G.tex=Math.max(.85,p.tex);
   Object.defineProperty(G,'pad',{get:()=>(p.pad||10)*GK});G.verts=p.verts.map(v=>({x:v.x*GK,y:v.y*GK}));G.name=p.name;return G}
-function placeGiant(){const i=Math.floor(Math.random()*CH0),G=giantOf(i);addPlush(G,(DIV+W)/2+(Math.random()-.5)*40,FLOOR-140);for(let k=0;k<120;k++)Engine.update(engine,1000/60);
+function placeGiant(){const i=Math.floor(Math.random()*CH0),G=giantOf(i);G.landed=false;addPlush(G,(DIV+W)/2+12+(Math.random()-.5)*30,-G.dh*.6);
+  const rs=[];while(rs.length<3){const r=CH0+Math.floor(Math.random()*(NPL-CH0));if(!rs.includes(r))rs.push(r)}DECOR=[{i:rs[0],x:DIV+24},{i:rs[1],x:W-58},{i:rs[2],x:W-28}];
   $('who').innerHTML='Gigante da vez: <b>'+G.name+'</b> <em>· '+G.cm+' cm</em>'}
 function setMachine(m){if(m===MACH)return;if(claw.state!=='ready'){banner('Espere a garra voltar');return}
   MACH=m;const k=(m===2?1.7:1)/CS;CS=m===2?1.7:1;Body.scale(prongL,k,k);Body.scale(prongR,k,k);
   for(const b of bodies)Composite.remove(world,b);bodies.length=0;if(m===2)placeGiant();else{settlePile();$('who').textContent='Mire bem no centro da pelúcia. As pesadas escorregam fácil.'}
-  $('mach1').classList.toggle('on',m===1);$('mach2').classList.toggle('on',m===2);document.querySelector('.window').classList.toggle('giant',m===2);
+  $('gsign').hidden=m!==2;$('mach1').classList.toggle('on',m===1);$('mach2').classList.toggle('on',m===2);document.querySelector('.window').classList.toggle('giant',m===2);
   $('hint').textContent=m===2?'Máquina gigante: '+GCOST+' moedas por jogada':'Toque nas setas para colocar uma moeda';audio();click(m===2?300:600);hud()}
 
 function swapMachine(){if(claw.state!=='ready'){banner('Espere a garra voltar');return}
@@ -587,7 +608,7 @@ function drawClaw(){
   for(const wx of[-15,15]){ctx.fillStyle='#1d1b20';ctx.beginPath();ctx.arc(x+wx,6,4,0,7);ctx.fill();ctx.fillStyle='#b9b6bf';ctx.beginPath();ctx.arc(x+wx,6,1.6,0,7);ctx.fill()}
   ctx.fillStyle='#2a272e';ctx.fillRect(x-4,20,8,4);
   // cabo de aço trançado
-  const top=24,bot=y-24*k;ctx.strokeStyle='#1b181d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bot);ctx.stroke();
+  const top=24,bot=y-24*k,hv=claw.held&&claw.held.plush.giant,jt=hv?Math.sin(performance.now()/38)*1.6:0;ctx.strokeStyle='#1b181d';ctx.lineWidth=hv?3.6:3;ctx.beginPath();ctx.moveTo(x,top);ctx.quadraticCurveTo(x+jt,(top+bot)/2,x,bot);ctx.stroke();
   ctx.strokeStyle='rgba(220,220,230,.55)';ctx.lineWidth=1;ctx.beginPath();for(let yy=top;yy<bot;yy+=4){ctx.moveTo(x-1.4,yy);ctx.lineTo(x+1.4,yy+2.6)}ctx.stroke();
   // garra de trás (perspectiva)
   const L=24+(1-claw.oB)*16;ctx.save();ctx.translate(x,y+4*k);ctx.scale(k,k);ctx.fillStyle='#3a3640';ctx.beginPath();ctx.moveTo(-2.6,0);ctx.lineTo(2.6,0);ctx.lineTo(2,L*.82);ctx.quadraticCurveTo(1,L,-1.2,L);ctx.lineTo(-2.2,L*.82);ctx.closePath();ctx.fill();ctx.fillStyle='#1c1a1f';ctx.beginPath();ctx.ellipse(0,L-1,2.2,1.6,0,0,7);ctx.fill();ctx.restore();
@@ -623,6 +644,8 @@ const totalWins=()=>Object.values(coll).reduce((a,b)=>a+b,0);
 const XKEY='garro-coll';let XCOLL={};try{XCOLL=JSON.parse(localStorage.getItem(XKEY)||'{}')||{}}catch(e){XCOLL={}}
 function saveX(){try{localStorage.setItem(XKEY,JSON.stringify(coll));localStorage.setItem('garra-real',JSON.stringify(coll))}catch(e){}}
 let bonus=0;try{bonus=+localStorage.getItem('garro-bonus')||0}catch(e){}
+let GCOLL={};try{GCOLL=JSON.parse(localStorage.getItem('garro-giant')||'{}')||{}}catch(e){}
+function saveG(){try{localStorage.setItem('garro-giant',JSON.stringify(GCOLL))}catch(e){}}
 // moedas infinitas só para quem desenvolve (conta Google). Na versão sem login: tocar 7x no contador de moedas liga/desliga.
 const DEV_EMAILS=['alexandre.et@gmail.com','joaobazanela@gmail.com'];let DEV=false;
 // cópia de teste dos devs (artefato): já abre com moedas infinitas; 7 toques no contador desligam
@@ -677,7 +700,7 @@ function release(reason){
   Composite.remove(world,claw.link);claw.link=null;claw.held=null;b.frictionAir=.012;
   // gigante solto em cima da porta do prêmio: cai pela portinhola (é largo demais para o buraco)
   if(!reason&&b.plush.giant&&claw.x<DIV){b.collisionFilter.mask=0;return}
-  setTimeout(()=>{b.collisionFilter.mask=CAT_PLUSH|CAT_WALL|CAT_PRONG},900);
+  setTimeout(()=>{b.collisionFilter.mask=CAT_PLUSH|CAT_WALL|CAT_PRONG|CAT_GUARD},900);
   if(reason==='slip'){banner(claw.snag?'Enroscou!':'Escorregou!',b.plush.name);thud()}
   if(reason==='heavy'){banner('Pesado demais!',b.plush.name+' · '+b.plush.g+' g');thud()}
 }
@@ -685,8 +708,8 @@ function stress(){return claw.held?claw.held.plush.g/claw.hold:0}
 
 function won(b){
   const p=b.plush;if(p.stone!==undefined){INV.st[p.stone]++;saveInv();roundWin=true;losses=0;banner(p.name+'!','Pedra rara! Use no bicho do mesmo elemento',true);fanfare();hud();return}
-  if(p.giant){coll[p.i]=(coll[p.i]||0)+1;saveX();const c0=careOf(p.i);c0.xp+=60;saveCare();syncEstado('capture',{plushId:p.i}  );
-    roundWin=true;losses=0;banner('GIGANTE! '+p.name,'+60 XP · foi para a coleção',true);fanfare();setTimeout(fanfare,700);renderShelf(p.i);hud();return}
+  if(p.giant){coll[p.i]=(coll[p.i]||0)+1;saveX();GCOLL[p.i]=(GCOLL[p.i]||0)+1;saveG();shakeWin(10);boom();for(let k=0;k<3;k++)setTimeout(()=>puff(40+Math.random()*60,FLOOR-40,26,['#ffd23c','#ff5a8a','#5ad1ff','#8aff6a','#ffffff'],true),k*300);const c0=careOf(p.i);c0.xp+=60;saveCare();syncEstado('capture',{plushId:p.i}  );
+    roundWin=true;losses=0;banner('🏆 GIGANTE! '+p.name,'+60 XP · selo de gigante na coleção',true);fanfare();setTimeout(fanfare,700);renderShelf(p.i);hud();return}
   coll[p.i]=(coll[p.i]||0)+1;saveX();const dup=coll[p.i]>1,evo=p.i<CH0;if(dup){const c0=careOf(p.i);c0.xp+=evo?20:5;saveCare()}
   syncEstado('capture',{plushId:p.i});
   roundWin=true;losses=0;banner(p.name+'!',dup?(evo?'Repetida! +20 XP pra evoluir':'Repetida! 2 iguais = 1 moeda'):p.rare<=2?'Pelúcia rara!':'Caiu no prêmio',true);fanfare();renderShelf(p.i);hud();
@@ -720,7 +743,7 @@ function step(){
       c.state='up';hum(true);
     }
   }else if(c.state==='up'){
-    c.y-=1.5;
+    const heavy=c.held&&c.held.plush.giant;c.y-=heavy?.85:1.5;
     if(c.held){
       if(c.slipAt>0&&c.y<c.slipAt)release(c.held.plush.g>c.hold*1.25?'heavy':'slip');
       else if(Math.random()<Math.max(0,stress()-.6)*.01+(Math.abs(c.held.angularVelocity)>.06?stress()*.012:0))release('slip');
@@ -730,7 +753,7 @@ function step(){
   }else if(c.state==='top'){
     if(++c.t>24){c.state='return';hum(true)}
   }else if(c.state==='return'){
-    const d=HOME-c.x;c.x+=Math.sign(d)*Math.min(Math.abs(d),1.8);
+    const d=HOME-c.x;c.x+=Math.sign(d)*Math.min(Math.abs(d),c.held&&c.held.plush.giant?1.05:1.8);
     if(c.held&&Math.random()<Math.max(0,stress()-.7)*.008+(Math.abs(c.held.angularVelocity)>.07?stress()*.01:0))release('slip');
     if(Math.abs(d)<.5){c.state='release';c.t=0;hum(false)}
   }else if(c.state==='release'){
@@ -749,15 +772,16 @@ function step(){
   for(let i=bodies.length-1;i>=0;i--){const b=bodies[i];
     if(b.position.y>H+60){Composite.remove(world,b);bodies.splice(i,1);if(b.position.x<DIV+20)won(b)}
     else if(b.plush.giant&&b!==claw.held&&b.position.x<DIV+30&&b.position.y>230){Composite.remove(world,b);bodies.splice(i,1);won(b)}
+    else if(b.plush.giant&&!b.plush.landed&&b.position.y>FLOOR-b.plush.dh*.5-26&&Math.abs(b.velocity.y)<1.6){b.plush.landed=true;shakeWin(8);boom();puff(b.position.x,FLOOR-6,30,['#8a7a6a','#b8a890','#6a5a4a']);banner('🦖 GIGANTE!',b.plush.name+' · '+b.plush.cm+' cm',true)}
     else if(b.plush.giant&&b.position.x>=DIV+30&&b.position.y>FLOOR+10){Body.setPosition(b,{x:Math.min(W-90,b.position.x),y:FLOOR-130});Body.setVelocity(b,{x:0,y:0})}}
 }
 function draw(){
-  ctx.drawImage(back,0,0,W,H);
+  ctx.drawImage(back,0,0,W,H);if(MACH===2){ctx.drawImage(backG,0,0,W,H);drawGiantDecor()}
   for(const b of bodies)if(b!==claw.held)drawPlush(b);
   if(claw.held)drawPlush(claw.held);
   ctx.drawImage(front,0,0,W,H);
   ctx.drawImage(rail,0,0,W,H);
-  drawClaw();
+  drawClaw();drawFX();
 }
 let last=performance.now(),acc=0;
 function loop(now){acc+=Math.min(80,now-last);last=now;let n=0;while(acc>=16.67&&n<4){step();acc-=16.67;n++}draw();requestAnimationFrame(loop)}
@@ -772,7 +796,7 @@ function click(f){tone(f,.06,'square',.06)}
 function thud(){tone(90,.25,'sine',.25);tone(60,.3,'triangle',.15)}
 function fanfare(){[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>tone(f,.25,'triangle',.12),i*95))}
 function hum(on){if(!ac)return;try{
-  if(on&&!motor){const o=ac.createOscillator(),g=ac.createGain(),f=ac.createBiquadFilter();o.type='sawtooth';o.frequency.value=58;f.type='lowpass';f.frequency.value=320;
+  if(on&&!motor){const o=ac.createOscillator(),g=ac.createGain(),f=ac.createBiquadFilter();o.type='sawtooth';o.frequency.value=(claw.held&&claw.held.plush.giant)?40:58;f.type='lowpass';f.frequency.value=320;
     g.gain.value=.035;o.connect(f).connect(g).connect(ac.destination);o.start();motor={o,g}}
   else if(!on&&motor){motor.g.gain.setTargetAtTime(0,ac.currentTime,.03);const m=motor;setTimeout(()=>m.o.stop(),150);motor=null}}catch(e){}}
 
@@ -831,7 +855,7 @@ function renderShelf(focus){
   const g=$('grid');g.innerHTML='';let got=0;
   PLUSH.forEach(p=>{const n=coll[p.i]||0;if(n)got++;
     const s=document.createElement('button');s.className='slot'+(n?'':' lock');s.setAttribute('aria-label',n?p.name:'Pelúcia não capturada');
-    const stg=n&&p.i<CH0?careStage(p.i):0;s.innerHTML='<img src="'+(stg===1&&EVOSPR[p.i]?EVOSPR[p.i].img:p.img)+'" alt=""><span>'+(n?evName(p.i,stg):'???')+'</span>'+(n>1?'<b>×'+n+'</b>':'')+(n?'<u>'+(stg?'★ ':'')+'NV '+lvOf(p.i)+'</u>':'');
+    const stg=n&&p.i<CH0?careStage(p.i):0;s.innerHTML=(GCOLL[p.i]?'<i class="gbadge">🏆'+(GCOLL[p.i]>1?GCOLL[p.i]:'')+'</i>':'')+'<img src="'+(stg===1&&EVOSPR[p.i]?EVOSPR[p.i].img:p.img)+'" alt=""><span>'+(n?evName(p.i,stg):'???')+'</span>'+(n>1?'<b>×'+n+'</b>':'')+(n?'<u>'+(stg?'★ ':'')+'NV '+lvOf(p.i)+'</u>':'');
     s.addEventListener('click',()=>{if(n){$('detail').hidden=true;openViewer(p.i)}else detail(p.i)});g.appendChild(s)});
   $('count').textContent=got+' de '+NPL;
   if(focus!==undefined)detail(focus);
@@ -1237,7 +1261,8 @@ NOEXTRA.add(0);// Terranox: modelo Tripo próprio (dinossauro)
 const GLB={};
 const GLBDATA={};
 function loadGLB(m){if(GLB[m.file])return GLB[m.file];
-  GLB[m.file]=new Promise((res,rej)=>{if(!THREE.GLTFLoader)return rej('noloader');const b64=GLBDATA[m.file];if(!b64)return new THREE.GLTFLoader().load(((window.GARRO_REMOTE&&m.remote)?window.GARRO_REMOTE:'')+m.file+'?v='+ASSETV,g=>res(g.scene),undefined,rej);
+  GLB[m.file]=new Promise((res,rej)=>{if(!THREE.GLTFLoader)return rej('noloader');const b64=GLBDATA[m.file];if(!b64&&window.GARRO_EVOTXT&&m.evoM){fetch(m.file+'.txt?v='+ASSETV).then(r=>{if(!r.ok)throw new Error('evo');return r.text()}).then(t=>{const bin=Uint8Array.from(atob(t.trim()),c=>c.charCodeAt(0));new THREE.GLTFLoader().parse(bin.buffer,'',g=>res(g.scene),rej)}).catch(rej);return}
+    if(!b64)return new THREE.GLTFLoader().load(((window.GARRO_REMOTE&&m.remote)?window.GARRO_REMOTE:'')+m.file+'?v='+ASSETV,g=>res(g.scene),undefined,rej);
     const bin=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));new THREE.GLTFLoader().parse(bin.buffer,'',g=>res(g.scene),rej)});return GLB[m.file]}
 function deformMat(mat,m,U){
   const ds=(m.ds!=null?m.ds:.5).toFixed(3);// força das dobras: os modelos Tripo esticam se a cabeça/cauda gira demais
@@ -1284,7 +1309,7 @@ function evoTex(i,map){if(EVT[i])return EVT[i];const img=map.image;if(!img||!img
     d[p]=Math.max(0,Math.min(255,r*255));d[p+1]=Math.max(0,Math.min(255,g*255));d[p+2]=Math.max(0,Math.min(255,b*255))}
   x.putImageData(D,0,0);const t=new THREE.CanvasTexture(cv);t.flipY=map.flipY;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.wrapS=map.wrapS;t.wrapT=map.wrapT;return EVT[i]=t}
 function applyEvoTex(i){const C=V.C;if(!C||!C.obj)return;C.obj.traverse(o=>{if(o.isMesh&&!o.userData.keep&&o.userData.baseMap){o.material.map=evoTex(i,o.userData.baseMap);o.material.needsUpdate=true}})}
-const ASSETV='61';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
+const ASSETV='62';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
   new THREE.TextureLoader().load(src,t=>{t.flipY=false;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;res(t)},undefined,()=>res(null))})}
 function dropTail(g,m){const w=g.attributes.uv2;if(!w)return g;g=g.clone();const p=g.attributes.position,B=m.TA;
   for(let i=0;i<p.count;i++){const k=w.getX(i);if(k<=0)continue;const x=p.getX(i),y=p.getY(i),z=p.getZ(i);p.setXYZ(i,x+(B[0]+(x-B[0])*.1-x)*k,y+(B[1]+(y-B[1])*.1-y)*k,z+(B[2]+(z-B[2])*.1-z)*k)}
@@ -1897,7 +1922,7 @@ function careOf(i){let c=CARE[i];const now=Date.now();
 function careXp(i){return careOf(i).xp}
 function careStage(i){return i>=CH0?2:lvOf(i)>=EVO_LV?1:0}
 function gsOf(i,st){return i>=CH0?1:GROW[st].gs}
-function refreshVStats(i){const p=PLUSH[i],st=careStage(i);$('vStats').textContent=Math.round(p.cm*gsOf(i,st))+' cm · '+p.g+' g · pego '+(coll[i]||0)+'x'+(i>=CH0?'':' · '+(st?'Evoluído':'Base'));if(i<CH0)$('vName').textContent=evName(i,st);renderPow(i)}
+function refreshVStats(i){const p=PLUSH[i],st=careStage(i);$('vStats').textContent=Math.round(p.cm*gsOf(i,st))+' cm · '+p.g+' g · pego '+(coll[i]||0)+'x'+(i>=CH0?'':' · '+(st?'Evoluído':'Base'))+(GCOLL[i]?' · 🏆 gigante ×'+GCOLL[i]:'');if(i<CH0)$('vName').textContent=evName(i,st);renderPow(i)}
 function renderCare(){
   if(!V.open||V.cur===undefined)return;const i=V.cur;renderSell(i);renderPow(i);
   const c=careOf(i),lv=lvOf(i),cap=capOf(i),st=careStage(i),m=(c.f+c.l+c.p)/3;
@@ -1910,16 +1935,23 @@ function renderCare(){
 }
 function updFood(){const s=$('cFeed')&&$('cFeed').querySelector('span');if(s)s.textContent='🍓 Comida ×'+INV.food}
 function useStone(){const i=V.cur;if(i===undefined||i>=CH0)return;const k=STONE_OF(i);if(lvOf(i)>=EVO_LV)return;if((INV.st[k]||0)<=0){audio();renderShop();$('shop').hidden=false;return}const c=careOf(i);INV.st[k]--;saveInv();audio();[523,784,1046,1568].forEach((f,q)=>setTimeout(()=>tone(f,.14,'triangle',.1),q*90));for(let q=0;q<6;q++)setTimeout(()=>float('💎','love'),q*90);gainXp(i,Math.max(1,(EVO_LV-1)*4-c.xp));renderCare()}
-const SELL_PRICE=1;// cada redondo vendido vale 1 moeda; pode vender até o último
-function renderSell(i){const b=$('cSell');if(!b)return;if(i<CH0){b.hidden=true;return}const n=coll[i]||0;b.hidden=false;b.disabled=n<1;
-  b.textContent=n>=1?'💰 Vender 1 · +'+SELL_PRICE+' moeda (tenho '+n+')':'💰 Nenhum para vender'}
-async function sellDup(){const i=V.cur;if(i===undefined||i<CH0)return;const n=coll[i]||0,q=1;if(n<1)return;const gain=q*SELL_PRICE,b=$('cSell');b.disabled=true;
+const SELL_PRICE=1,SELL_BIG=30,SELL_GIANT=40;// redondo 1 · bicho especial (que evolui) 30 · pelúcia gigante 40
+function renderSell(i){const b=$('cSell'),bg=$('cSellG');if(!b)return;const n=coll[i]||0,big=i<CH0;b.hidden=false;b.disabled=n<1;b.dataset.armed='';
+  b.textContent=n>=1?'💰 Vender 1 · +'+(big?SELL_BIG:SELL_PRICE)+' moeda'+(big?'s':'')+' (tenho '+n+')':'💰 Nenhum para vender';
+  const gn=GCOLL[i]||0;bg.hidden=!(big&&gn);bg.dataset.armed='';bg.disabled=false;bg.textContent='🏆 Vender gigante · +'+SELL_GIANT+' moedas (tenho '+gn+')'}
+async function sellDup(){const i=V.cur;if(i===undefined)return;const n=coll[i]||0;if(n<1)return;const big=i<CH0,b=$('cSell');
+  if(big&&b.dataset.armed!=='1'){b.dataset.armed='1';b.textContent='Toque de novo: vender '+PLUSH[i].name+' por '+SELL_BIG+' 🪙';return}
+  const q=1,gain=big?SELL_BIG:SELL_PRICE;b.disabled=true;
   const r=await syncEstado('sell',{plushId:i,qty:q});
   if(r&&typeof r.coins==='number'){coins=r.coins+bonus;coll[i]=Math.max(0,typeof r.count==='number'?r.count:n-q)}else{coll[i]=n-q;bonus+=gain;coins+=gain;saveBonus()}
   saveX();audio();[784,988,1319,1568].forEach((f,k)=>setTimeout(()=>tone(f,.12,'triangle',.09),k*80));
   for(let k=0;k<6;k++)setTimeout(()=>float('🪙','love'),k*100);banner('+'+gain+' moeda'+(gain>1?'s':''),'Vendeu '+PLUSH[i].name+(coll[i]?'':' (era o último)'),true);
+  hud();renderShelf();if(!coll[i]&&V.open){$('vClose').click();return}renderSell(i);if(V.open)refreshVStats(i)}
+function sellGiant(){const i=V.cur;if(i===undefined||!(GCOLL[i]>0))return;const b=$('cSellG');
+  if(b.dataset.armed!=='1'){b.dataset.armed='1';b.textContent='Toque de novo: vender o gigante por '+SELL_GIANT+' 🪙';return}
+  GCOLL[i]--;saveG();bonus+=SELL_GIANT;coins+=SELL_GIANT;saveBonus();audio();fanfare();banner('+'+SELL_GIANT+' moedas','Vendeu o '+PLUSH[i].name+' gigante',true);
   hud();renderShelf();renderSell(i);if(V.open)refreshVStats(i)}
-$('cSell').addEventListener('click',sellDup);
+$('cSell').addEventListener('click',sellDup);$('cSellG').addEventListener('click',sellGiant);
 $('btnSwap').addEventListener('click',swapMachine);
 $('mach1').addEventListener('click',()=>setMachine(1));$('mach2').addEventListener('click',()=>setMachine(2));
 {let tc=0,tt=0;$('coins').parentElement.addEventListener('click',()=>{if(!window.GARRO_OFFLINE)return;const now=Date.now();if(now-tt>1500)tc=0;tt=now;if(++tc>=7){tc=0;DEV=!DEV;try{localStorage.setItem('garro-dev',DEV?'1':'0')}catch(e){}banner(DEV?'Modo dev: moedas infinitas':'Modo dev desligado');hud()}})}

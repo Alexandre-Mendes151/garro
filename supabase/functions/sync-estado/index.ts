@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
   if (body.action === "sell") {
     const plushId = Number(body.plushId);
     const qty = Number(body.qty);
-    if (!Number.isInteger(plushId) || plushId < 20 || plushId >= 43 || !Number.isInteger(qty) || qty < 1) {
+    if (!Number.isInteger(plushId) || plushId < 0 || plushId >= 43 || !Number.isInteger(qty) || qty < 1) {
       return json({ error: "bad_sale" }, 400);
     }
     const { data, error } = await admin.rpc("rpc_sell", { p_user: userId, p_plush_id: plushId, p_qty: qty }).single();

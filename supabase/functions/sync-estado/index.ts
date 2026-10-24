@@ -1,8 +1,24 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405 });
+    return json({ error: "method_not_allowed" }, 405);
   }
 
   const authHeader = req.headers.get("Authorization") ?? "";
@@ -14,7 +30,7 @@ Deno.serve(async (req) => {
   });
   const { data: userData, error: userErr } = await userClient.auth.getUser();
   if (userErr || !userData?.user) {
-    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
+    return json({ error: "unauthorized" }, 401);
   }
   const userId = userData.user.id;
 
@@ -22,49 +38,49 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body.action !== "string") {
-    return new Response(JSON.stringify({ error: "bad_request" }), { status: 400 });
+    return json({ error: "bad_request" }, 400);
   }
 
   if (body.action === "refill") {
     const { data, error } = await admin.rpc("rpc_refill", { p_user: userId }).single();
     if (error || !data) {
-      return new Response(JSON.stringify({ error: "refill_rejected" }), { status: 429 });
+      return json({ error: "refill_rejected" }, 429);
     }
-    return new Response(JSON.stringify({ coins: data.coins, wins: data.wins }));
+    return json({ coins: data.coins, wins: data.wins });
   }
 
   if (body.action === "round_start") {
     const { data, error } = await admin.rpc("rpc_round_start", { p_user: userId }).single();
     if (error || !data) {
-      return new Response(JSON.stringify({ error: "round_start_rejected" }), { status: 400 });
+      return json({ error: "round_start_rejected" }, 400);
     }
-    return new Response(JSON.stringify({ coins: data.coins, wins: data.wins }));
+    return json({ coins: data.coins, wins: data.wins });
   }
 
   if (body.action === "capture") {
     const plushId = Number(body.plushId);
     if (!Number.isInteger(plushId) || plushId < 0 || plushId >= 43) {
-      return new Response(JSON.stringify({ error: "bad_plush_id" }), { status: 400 });
+      return json({ error: "bad_plush_id" }, 400);
     }
     const { data, error } = await admin.rpc("rpc_capture", { p_user: userId, p_plush_id: plushId }).single();
     if (error || !data) {
-      return new Response(JSON.stringify({ error: "capture_rejected" }), { status: 400 });
+      return json({ error: "capture_rejected" }, 400);
     }
-    return new Response(JSON.stringify({ coins: data.coins, wins: data.wins, plushId, count: data.count }));
+    return json({ coins: data.coins, wins: data.wins, plushId, count: data.count });
   }
 
   if (body.action === "sell") {
     const plushId = Number(body.plushId);
     const qty = Number(body.qty);
     if (!Number.isInteger(plushId) || plushId < 20 || plushId >= 43 || !Number.isInteger(qty) || qty < 1) {
-      return new Response(JSON.stringify({ error: "bad_sale" }), { status: 400 });
+      return json({ error: "bad_sale" }, 400);
     }
     const { data, error } = await admin.rpc("rpc_sell", { p_user: userId, p_plush_id: plushId, p_qty: qty }).single();
     if (error || !data) {
-      return new Response(JSON.stringify({ error: "sale_rejected" }), { status: 400 });
+      return json({ error: "sale_rejected" }, 400);
     }
-    return new Response(JSON.stringify({ coins: data.coins, wins: data.wins, plushId, count: data.count }));
+    return json({ coins: data.coins, wins: data.wins, plushId, count: data.count });
   }
 
-  return new Response(JSON.stringify({ error: "unknown_action" }), { status: 400 });
+  return json({ error: "unknown_action" }, 400);
 });

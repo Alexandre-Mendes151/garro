@@ -1210,7 +1210,31 @@ function weldNormals(g){const p=g.attributes.position,n=p.count,id=new Int32Arra
   const N=new Float32Array(n*3);for(let i=0;i<n;i++){const w=id[i]*3,l=Math.hypot(acc[w],acc[w+1],acc[w+2])||1;N[i*3]=acc[w]/l;N[i*3+1]=acc[w+1]/l;N[i*3+2]=acc[w+2]/l}
   g.setAttribute('normal',new THREE.BufferAttribute(N,3))}
 const SKIN={};
-const ASSETV='52';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
+// forma evoluída: arquivo .glb próprio quando existir (ex.: 'models/petrun_evo.glb'); senão o mesmo corpo com a pele evoluída
+const EVOFILE={};
+const EVT={};
+function evoTex(i,map){if(EVT[i])return EVT[i];const img=map.image;if(!img||!img.width)return map;
+  const S=Math.min(1024,img.width),cv=document.createElement('canvas');cv.width=cv.height=S;const x=cv.getContext('2d');x.drawImage(img,0,0,S,S);
+  const D=x.getImageData(0,0,S,S),d=D.data,e=ELEM[i];let seed=i*977+13;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  // manchas grandes (musgo, brasas, estrelas) num grid grosso
+  const G=24,grid=new Float32Array((G+1)*(G+1));for(let k=0;k<grid.length;k++)grid[k]=rnd();
+  const noise=(px,py)=>{const gx=px/S*G,gy=py/S*G,ix=gx|0,iy=gy|0,fx=gx-ix,fy=gy-iy,a=grid[iy*(G+1)+ix],b=grid[iy*(G+1)+ix+1],c=grid[(iy+1)*(G+1)+ix],dd=grid[(iy+1)*(G+1)+ix+1];return a+(b-a)*fx+(c-a)*fy+(a-b-c+dd)*fx*fy};
+  for(let p=0,n=0;p<d.length;p+=4,n++){let r=d[p]/255,g=d[p+1]/255,b=d[p+2]/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),L=(mx+mn)/2,sat=mx-mn;
+    const px=n%S,py=(n/S)|0;let nz=noise(px,py);
+    // contraste + cor mais forte para todos
+    const k=1.28;r=L+(r-L)*k;g=L+(g-L)*k;b=L+(b-L)*k;r=(r-.5)*1.1+.5;g=(g-.5)*1.1+.5;b=(b-.5)*1.1+.5;
+    if(e==='stone'||e==='earth'){if(sat<.18&&nz>.52){const t=Math.min(1,(nz-.52)*6);r=r*(1-t)+(.30+.25*L)*t;g=g*(1-t)+(.46+.3*L)*t;b=b*(1-t)+(.12+.1*L)*t}if(e==='earth'){r*=.95;g*=1.04;b*=.9}}
+    else if(e==='lava'||e==='embers'){if(L<.35){r*=.55;g*=.42;b*=.42}else{r=Math.min(1,r*1.12+.06);g=Math.min(1,g*1.1+.03)}if(L<.3&&nz>.6){const t=Math.min(1,(nz-.6)*5);r+=t*.7;g+=t*.25}}
+    else if(e==='ice'||e==='water'||e==='cloud'){if(sat<.2&&L>.55){r*=.86;g*=.94}b=Math.min(1,b*1.08+.03);if(nz>.72&&L>.5){const t=Math.min(1,(nz-.72)*6);r+=t*.15;g+=t*.2;b+=t*.25}}
+    else if(e==='shadow'){r*=.82;g*=.72;b*=.92;if(sat>.15){r=Math.min(1,r*1.15+.04);b=Math.min(1,b*1.3+.06)}}
+    else if(e==='stars'||e==='gold'||e==='petals'){if(L>.5){r=Math.min(1,r*1.06+.03);g=Math.min(1,g*1.03+.02)}if(nz>.8&&L>.45){const t=Math.min(1,(nz-.8)*8);r+=t*.35;g+=t*.28;b+=t*.05}}
+    else if(e==='electric'){if(r>b){r=Math.min(1,r*1.1+.04);g=Math.min(1,g*1.1+.04)}}
+    else if(e==='leaves'||e==='flowers'||e==='sand'){if(g>r&&g>b){g=Math.min(1,g*1.08)}if(r>g&&r>b){r=Math.min(1,r*1.1)}}
+    else if(e==='swamp'){if(sat>.15){r=Math.min(1,r*1.1);b=Math.min(1,b*1.12)}}
+    d[p]=Math.max(0,Math.min(255,r*255));d[p+1]=Math.max(0,Math.min(255,g*255));d[p+2]=Math.max(0,Math.min(255,b*255))}
+  x.putImageData(D,0,0);const t=new THREE.CanvasTexture(cv);t.flipY=map.flipY;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.wrapS=map.wrapS;t.wrapT=map.wrapT;return EVT[i]=t}
+function applyEvoTex(i){const C=V.C;if(!C||!C.obj)return;C.obj.traverse(o=>{if(o.isMesh&&!o.userData.keep&&o.userData.baseMap){o.material.map=evoTex(i,o.userData.baseMap);o.material.needsUpdate=true}})}
+const ASSETV='53';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
   new THREE.TextureLoader().load(src,t=>{t.flipY=false;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;res(t)},undefined,()=>res(null))})}
 function dropTail(g,m){const w=g.attributes.uv2;if(!w)return g;g=g.clone();const p=g.attributes.position,B=m.TA;
   for(let i=0;i<p.count;i++){const k=w.getX(i);if(k<=0)continue;const x=p.getX(i),y=p.getY(i),z=p.getZ(i);p.setXYZ(i,x+(B[0]+(x-B[0])*.1-x)*k,y+(B[1]+(y-B[1])*.1-y)*k,z+(B[2]+(z-B[2])*.1-z)*k)}
@@ -1229,14 +1253,14 @@ function attachParts(obj,i,m){const sp0=SPEC[i],sp=Object.assign({},sp0,{x:sp0.x
   const wings=(C.wings||[]).map(w=>({w,z:w.rotation.z,s:Math.sign(w.position.x)||1}));
   return{hpG,tpG,wings,segs:C.segs||[]}}
 async function openGLB(i){setDet(i);
-  const m=MODELS[i];if(!initViewer())return false;
+  const evo=careStage(i)>0&&i<CH0,m0=MODELS[i],m=evo&&EVOFILE[i]?Object.assign({},m0,{file:EVOFILE[i],skin:null,key:m0.key+'E'}):m0;if(!initViewer())return false;
   let src;try{src=await loadGLB(m)}catch(e){return false}
   if(V.C)V.spin.remove(V.C.root);if(V.T){V.spin.remove(V.T.root);V.T=null}
   const U={uHY:{value:0},uHP:{value:0},uHR:{value:0},uTail:{value:0},uT:{value:0},uWing:{value:0}};
   const obj=src.clone(true);
   const skin=m.skin?await loadSkin(m.skin):null;
   obj.traverse(o=>{if(o.isMesh){if(m.notail)o.geometry=dropTail(o.geometry,m);if(!o.geometry.attributes.normal)weldNormals(o.geometry);
-    const mm=o.material.clone();if(skin)mm.map=skin;if(mm.map)mm.map.encoding=THREE.sRGBEncoding;mm.roughness=.92;mm.metalness=0;deformMat(mm,m,U);o.material=mm;const dm=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});deformMat(dm,m,U);o.customDepthMaterial=dm}});
+    const mm=o.material.clone();if(skin)mm.map=skin;if(mm.map)mm.map.encoding=THREE.sRGBEncoding;if(evo&&!EVOFILE[i]&&mm.map){o.userData.baseMap=mm.map;mm.map=evoTex(i,mm.map)}else if(mm.map)o.userData.baseMap=mm.map;mm.roughness=.92;mm.metalness=0;deformMat(mm,m,U);o.material=mm;const dm=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});deformMat(dm,m,U);o.customDepthMaterial=dm}});
   const box=new THREE.Box3().setFromObject(obj),sz=box.getSize(new THREE.Vector3()),k=2/Math.max(sz.x,sz.y,sz.z);
   const parts=m.HC?attachParts(obj,i,m):attachExtras(obj,i,m);
   const roll=new THREE.Group(),root=new THREE.Group();obj.scale.setScalar(k);obj.position.y=-sz.y*k/2;roll.add(obj);roll.position.y=sz.y*k/2;root.add(roll);
@@ -1981,7 +2005,7 @@ function evolve(i,from,to){
   [523,659,784,1046,1318,1568,2093].forEach((q,k)=>setTimeout(()=>tone(q,.24,'triangle',.11),k*100));
   for(let k=0;k<10;k++)setTimeout(()=>float(['✨','⭐','💖','🌟'][k%4],'love'),k*110);
   setTimeout(()=>{
-    if(PROC[i]){openFox(i,true)}else{const C=V.C;if(C){C.gs=GROW[to].gs;V.pop=performance.now();makeAura(i)}}
+    if(PROC[i]){openFox(i,true)}else{const C=V.C;if(C){C.gs=GROW[to].gs;V.pop=performance.now();if(EVOFILE[i])setTimeout(()=>openViewer(i),1600);else applyEvoTex(i);makeAura(i)}}
     V.last=performance.now();refreshVStats(i);renderCare();if(V.open)fit()},380)}
 /* evoluídos: brilho na cor do elemento + faíscas girando + anel no chão */
 function killAura(){V.evoK=0;if(V.evoG){if(V.evoG.parent)V.evoG.parent.remove(V.evoG);V.evoG=null;V.evoW=null}if(V.aura){V.spin.remove(V.aura.g);V.aura=null}
@@ -2287,7 +2311,7 @@ function evBall(g,pos,r,col,glow){const m=new THREE.Mesh(new THREE.SphereGeometr
 function evFlower(g,pos,size,col,col2,mid){size*=.75;const f=new THREE.Group();f.position.set(pos[0],pos[1],pos[2]);for(let k=0;k<6;k++){const a=k/6*Math.PI*2;evLeaf(f,[0,0,0],[Math.cos(a),.35,Math.sin(a)],size,size*.42,col,col2,.1,false,0)}evBall(f,[0,.02,0],size*.2,mid||'#ffd23c',.3);g.add(f);return f}
 function evRing(g,pos,r,col,arc,rot){const m=new THREE.Mesh(new THREE.TorusGeometry(r,.014,8,40,arc||Math.PI*2),new THREE.MeshBasicMaterial({color:new THREE.Color(col)}));m.position.set(pos[0],pos[1],pos[2]);if(rot)m.rotation.set(rot[0],rot[1],rot[2]);g.add(m);return m}
 // cada forma: recebe (g, hc) com g no espaço do modelo (corpo ~1 de comprimento, costas em y~.5)
-const EVCROWN=(c1,c2)=>(g,h)=>{evRing(g,[h[0],h[1]+.2,h[2]-.04],.15,c1,Math.PI*2,[Math.PI/2.4,0,0]);evRing(g,[h[0],h[1]+.2,h[2]-.04],.11,c2,Math.PI*2,[Math.PI/2.4,0,0]);for(let k=0;k<5;k++){const a=k*1.26;evBall(g,[h[0]+Math.sin(a)*.15,h[1]+.2+Math.cos(a)*.03,h[2]-.04+Math.cos(a)*.15],.018,c2,1)}};
+const EVCROWN=(c1,c2)=>(g,h)=>{};const EVCROWN_OLD=(c1,c2)=>(g,h)=>{evRing(g,[h[0],h[1]+.2,h[2]-.04],.15,c1,Math.PI*2,[Math.PI/2.4,0,0]);evRing(g,[h[0],h[1]+.2,h[2]-.04],.11,c2,Math.PI*2,[Math.PI/2.4,0,0]);for(let k=0;k<5;k++){const a=k*1.26;evBall(g,[h[0]+Math.sin(a)*.15,h[1]+.2+Math.cos(a)*.03,h[2]-.04+Math.cos(a)*.15],.018,c2,1)}};
 const EVOX={
  1:EVCROWN('#7fd8ff','#ffffff'),2:EVCROWN('#ff5a1a','#ffe08a'),12:EVCROWN('#9fd8ff','#ffffff'),3:EVCROWN('#d8c8ff','#ffffff'),5:EVCROWN('#ff7ac0','#ffe0f0'),7:EVCROWN('#ffd21c','#fff7b0'),9:EVCROWN('#ffd870','#ffffff'),15:EVCROWN('#ff9ab8','#ffe0a0'),17:EVCROWN('#ff9ad4','#fff0fa'),18:EVCROWN('#a060ff','#d8ff60'),19:EVCROWN('#ffd23c','#fff7d0'),
  0:EVCROWN('#9a6a44','#d8ffa0'),

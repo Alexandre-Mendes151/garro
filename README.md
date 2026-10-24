@@ -89,3 +89,8 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 ### Itens e pedras novas
 - Botão **Itens 🎒** no topo: mostra quanta comida e quantas pedras você tem (as que você tem aparecem primeiro). Tocando numa pedra, lista os seus bichinhos que podem evoluir com ela; escolher um abre a tela dele e evolui na hora.
 - Duas pedras novas: **Pedra de Luz** (Lunaris, Lumina, Auren) e **Pedra Sombria** (Umbros, Sombril). A Pedra Fantasma ficou para o Toxilys; a Psíquica, sem bicho por enquanto. Aparecem raras na máquina e custam 400 na loja, como as outras.
+
+### Nitidez e forma evoluída
+- Texturas da versão leve (artefato) subiram de 640 para 1024 px nos 14 modelos Tripo novos: não fica mais desfocado de perto.
+- Forma evoluída: sem auréola. Enquanto não chega o modelo evoluído do Tripo, o mesmo corpo ganha uma **pele evoluída** gerada no aparelho (`evoTex`): Petrun com mais musgo, Magmord mais escuro com lava, gelo mais azul, sombra mais roxa etc., além de ficar maior e com o anel/brilho.
+- Quando chegar o .glb da forma evoluída, basta colocar em `models/<nome>_evo.glb` e registrar em `EVOFILE[id]`; a tela troca de modelo sozinha ao evoluir.

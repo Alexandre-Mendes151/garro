@@ -85,3 +85,7 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - **Reposição mais lenta:** a máquina não enche mais de volta a cada jogada. Cai 1 bichinho novo a cada 4 jogadas quando a pilha está baixa; só repõe 3 de uma vez se ficar quase vazia (menos de 6).
 - **Trocar bichinhos da máquina:** botão abaixo dos controles, custa 10 moedas (`SWAP_COST`). Tira todos e sorteia uma pilha nova.
 - **Venda de um em um:** cada redondo vendido vale 1 moeda e dá para vender até o último. **Servidor:** publicar a migração `0004_venda_um_a_um.sql` e a função `sync-estado` atualizada (aceita `qty` a partir de 1). Até lá, a venda é guardada no aparelho.
+
+### Itens e pedras novas
+- Botão **Itens 🎒** no topo: mostra quanta comida e quantas pedras você tem (as que você tem aparecem primeiro). Tocando numa pedra, lista os seus bichinhos que podem evoluir com ela; escolher um abre a tela dele e evolui na hora.
+- Duas pedras novas: **Pedra de Luz** (Lunaris, Lumina, Auren) e **Pedra Sombria** (Umbros, Sombril). A Pedra Fantasma ficou para o Toxilys; a Psíquica, sem bicho por enquanto. Aparecem raras na máquina e custam 400 na loja, como as outras.

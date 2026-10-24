@@ -119,7 +119,8 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .battle h3{margin:0;text-align:center;font-family:var(--display);font-weight:400;font-size:28px;color:#ffd25a}
 .bfield{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px}
 .bcard{position:relative;text-align:center;display:grid;gap:5px;justify-items:center}
-.bcard img{width:min(34vw,150px);height:min(34vw,150px);object-fit:contain;filter:drop-shadow(0 8px 10px rgba(0,0,0,.5))}
+.bcard.op img{scale:-1 1}
+.bcard img{transform-origin:50% 92%;width:min(34vw,150px);height:min(34vw,150px);object-fit:contain;filter:drop-shadow(0 8px 10px rgba(0,0,0,.5))}
 .bcard.hit img{animation:bhit .3s}.bcard.atk img{animation:batk .35s}
 @keyframes bhit{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px) rotate(-4deg);filter:brightness(2)}60%{transform:translateX(8px)}}
 @keyframes batk{50%{transform:translateX(24px) scale(1.12)}}
@@ -1773,7 +1774,7 @@ function pickOpp(my){const myLv=lvOf(my);const same=Math.random()<.75;let j;do{j
 function bName(f){return evName(f.i,f.i<CH0&&f.lv>=EVO_LV?1:0)}
 function bFill(side,f){$('b'+side+'Img').src=PLUSH[f.i].img;$('b'+side+'Name').textContent=bName(f);$('b'+side+'St').textContent=(ELNAME[ELEM[f.i]]||'')+' · Nv '+f.lv+' · ⚔️ '+f.atk+' · 🛡️ '+f.def+' · ❤️ '+f.hp;$('b'+side+'Hp').style.width='100%'}
 function openBattle(){const i=V.cur;if(i===undefined)return;audio();BT={me:bStats({i,lv:lvOf(i)}),busy:false,done:false};BT.op=pickOpp(i);
-  bFill('Me',BT.me);bFill('Op',BT.op);$('bRes').innerHTML='Quem tem mais poder leva vantagem, mas a sorte conta!';$('bGo').disabled=$('bOther').disabled=$('bClose').disabled=false;$('bGo').textContent='⚔️ Lutar!';$('battle').hidden=false}
+  bFill('Me',BT.me);bFill('Op',BT.op);bIdle();$('bRes').innerHTML='Quem tem mais poder leva vantagem, mas a sorte conta!';$('bGo').disabled=$('bOther').disabled=$('bClose').disabled=false;$('bGo').textContent='⚔️ Lutar!';$('battle').hidden=false}
 function simBattle(a,b){let ha=a.hp,hb=b.hp,turn=Math.random()<.5?0:1;const log=[];
   for(let r=0;r<80&&ha>0&&hb>0;r++){const A=turn?b:a,D=turn?a:b;let d=Math.max(2,Math.round(A.atk*(.8+Math.random()*.4)-D.def*.45));const crit=Math.random()<.1;if(crit)d=Math.round(d*1.5);
     if(turn)ha=Math.max(0,ha-d);else hb=Math.max(0,hb-d);log.push({t:turn,d,crit,ha,hb});turn^=1}
@@ -1812,24 +1813,46 @@ function bFx(from,to,el,crit){const F=BFX[el]||BFX.earth,fld=$('bFx');if(!fld)re
   fl.animate([{opacity:0,transform:'scale(.4)'},{opacity:.95,transform:'scale(1.2)',offset:.3},{opacity:0,transform:'scale(1.6)'}],{duration:520,delay:360+(n-1)*(F.m==='bolt'?90:F.m==='jet'?55:F.m==='spray'?50:140)*.6}).onfinish=()=>fl.remove();
   // tom do ataque
   const t=F.f;if(t[0]>=1000)[1400,900,1500,700].forEach((q,i)=>setTimeout(()=>tone(q,.05,'sawtooth',.06),i*60));else tone(t[0]+Math.random()*30,.18,F.m==='jet'?'sine':'square',.07)}
-function fightBattle(){if(!BT||BT.busy)return;BT.busy=true;$('bGo').disabled=$('bOther').disabled=$('bClose').disabled=true;const me=BT.me,op=BT.op,R=simBattle(me,op);$('bRes').textContent='Lutando...';
+
+/* ---------- movimento na luta ---------- */
+const DS='drop-shadow(0 8px 10px rgba(0,0,0,.5))';
+function bImg(sd){return $(sd?'bOpImg':'bMeImg')}
+function bClear(){bImg(0).style.transformOrigin=bImg(1).style.transformOrigin='';for(const sd of[0,1]){const im=bImg(sd);im.getAnimations().forEach(a=>a.cancel())}$('bFx').querySelectorAll('.bconf').forEach(e=>e.remove())}
+function bIdle(){bClear();[0,1].forEach(sd=>{const im=bImg(sd);im.animate([{transform:'translateY(0) scale(1,1)'},{transform:'translateY(-5px) scale(.99,1.025)'},{transform:'translateY(0) scale(1,1)'}],{duration:1500+sd*260,iterations:Infinity,easing:'ease-in-out'})})}
+function bLunge(sd,crit){const im=bImg(sd),k=crit?1.5:1;im.animate([{transform:'translateX(0) scale(1)'},{transform:`translateX(${-16*k}px) scale(${.94},${1.06}) rotate(${-4*k}deg)`,offset:.3},{transform:`translateX(${62*k}px) scale(${1.1+.05*k}) rotate(${5*k}deg)`,offset:.55},{transform:'translateX(0) scale(1)'}],{duration:crit?560:440,easing:'ease-in-out'})}
+function bHit(sd,crit){const im=bImg(sd),k=crit?1.6:1;im.animate([{transform:'translateX(0) rotate(0)',filter:DS},{transform:`translateX(${-26*k}px) rotate(${-8*k}deg) scale(.94,1.04)`,filter:'brightness(2.2) '+DS,offset:.25},{transform:`translateX(${8*k}px) rotate(${3*k}deg)`,filter:DS,offset:.6},{transform:'translateX(0) rotate(0)',filter:DS}],{duration:crit?520:380,easing:'ease-out'})}
+function bKO(sd){const im=bImg(sd);im.style.transformOrigin='50% 62%';im.getAnimations().forEach(a=>a.cancel());im.animate([{transform:'translate(0,0) rotate(0)',filter:DS,opacity:1},{transform:'translate(-8px,2px) rotate(-14deg)',offset:.3},{transform:'translate(0,22px) rotate(-84deg)',filter:'grayscale(.7) '+DS,opacity:.7}],{duration:900,fill:'forwards',easing:'ease-in'})}
+function bConf(sd,list,n){const fld=$('bFx'),pr=fld.getBoundingClientRect(),r=bImg(sd).getBoundingClientRect(),cx=r.left+r.width/2-pr.left,cy=r.top-pr.top+r.height*.1;
+  for(let k=0;k<n;k++){const e=document.createElement('i');e.className='bconf';e.textContent=list[k%list.length];e.style.fontSize=(22+Math.random()*14)+'px';fld.appendChild(e);const dx=(Math.random()-.5)*150,h=40+Math.random()*90;
+    e.animate([{transform:`translate(${cx}px,${cy}px) scale(.4)`,opacity:0},{transform:`translate(${cx+dx*.5}px,${cy-h}px) scale(1.1)`,opacity:1,offset:.35},{transform:`translate(${cx+dx}px,${cy-h-40}px) scale(.9)`,opacity:0}],{duration:1300+Math.random()*700,delay:k*140,fill:'both'}).onfinish=()=>e.remove()}}
+function bWin(sd){const im=bImg(sd);im.getAnimations().forEach(a=>a.cancel());const m=Math.floor(Math.random()*3);let name;
+  if(m===0){name='Três pulinhos de alegria! 🎉';const f=[];for(let q=0;q<3;q++){f.push({transform:'translateY(0) scale(1.08,.9)'},{transform:'translateY(-62px) scale(.94,1.1) rotate('+(q%2?-8:8)+'deg)'})}f.push({transform:'translateY(0) scale(1.08,.9)'},{transform:'translateY(0) scale(1)'});
+    im.animate(f,{duration:1900,easing:'ease-in-out'}).onfinish=()=>bIdle2(sd)}
+  else if(m===1){name='Deitou e rolou de felicidade! 🥰';
+    im.animate([{transform:'translate(0,0) rotate(0)'},{transform:'translate(0,16px) rotate(-90deg)',offset:.2},{transform:'translate(50px,18px) rotate(270deg)',offset:.45},{transform:'translate(-50px,18px) rotate(630deg)',offset:.7},{transform:'translate(0,16px) rotate(740deg) scale(1,1)',offset:.85},{transform:'translate(0,-30px) rotate(720deg)',offset:.93},{transform:'translate(0,0) rotate(720deg)'}],{duration:2300,easing:'ease-in-out'}).onfinish=()=>bIdle2(sd)}
+  else{name='Correndo em círculos de alegria! 🌀';const f=[],N=24,R=52;for(let q=0;q<=N*2;q++){const a=q/N*Math.PI*2;f.push({transform:`translate(${(Math.sin(a)*R).toFixed(1)}px,${(-Math.abs(Math.sin(q*.9))*14+(1-Math.cos(a))*10).toFixed(1)}px) rotate(${(Math.sin(a)*8).toFixed(1)}deg) scale(${Math.cos(a)>0?1:1})`})}
+    im.animate(f,{duration:2600,easing:'linear'}).onfinish=()=>bIdle2(sd)}
+  bConf(sd,['⭐','💖','✨','🎉'],10);return name}
+function bIdle2(sd){const im=bImg(sd);im.animate([{transform:'translateY(0)'},{transform:'translateY(-6px) scale(.99,1.03)'},{transform:'translateY(0)'}],{duration:1100,iterations:Infinity,easing:'ease-in-out'})}
+function bSad(sd){const im=bImg(sd);im.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(10px) rotate(-6deg) scale(1,.94)'}],{duration:900,fill:'forwards',easing:'ease-out'});bConf(sd,['💧','💔'],4)}
+function fightBattle(){if(!BT||BT.busy)return;if(BT.fought){BT.fought=0;BT.op=pickOpp(BT.me.i);bFill('Me',BT.me);bFill('Op',BT.op)}bIdle();BT.busy=true;$('bGo').disabled=$('bOther').disabled=$('bClose').disabled=true;const me=BT.me,op=BT.op,R=simBattle(me,op);$('bRes').textContent='Lutando...';
   R.log.forEach((e,k)=>setTimeout(()=>{
-    const A=$(e.t?'bOp':'bMe'),D=$(e.t?'bMe':'bOp');A.classList.add('atk');setTimeout(()=>A.classList.remove('atk'),360);
+    const A=$(e.t?'bOp':'bMe'),D=$(e.t?'bMe':'bOp');bLunge(e.t,e.crit);
     bFx(A,D,ELEM[(e.t?op:me).i],e.crit);
-    setTimeout(()=>{D.classList.add('hit');setTimeout(()=>D.classList.remove('hit'),360);
+    setTimeout(()=>{bHit(e.t?0:1,e.crit);
     $('bMeHp').style.width=Math.round(e.ha/me.hp*100)+'%';$('bOpHp').style.width=Math.round(e.hb/op.hp*100)+'%';
     const f=document.createElement('span');f.className='bdmg';f.textContent=(e.crit?'💥 ':'')+'-'+e.d;f.style.left=(e.t?'18%':'68%');D.appendChild(f);setTimeout(()=>f.remove(),850);
     tone(e.crit?220:150+Math.random()*50,.09,'square',.07)},430)},k*850));
   setTimeout(()=>{
     const my=me.i;let line;
-    if(R.win){const paid=battlePay();line='<big>Vitória! 🏆</big><span>+10 XP'+(paid?' · +1 moeda 🪙':' · limite de moedas por hora')+'</span>';[523,659,784,1046,1318].forEach((f,k)=>setTimeout(()=>tone(f,.18,'triangle',.1),k*110));gainXp(my,10)}
-    else{line='<big>Derrota 💔</big><span>+4 XP pela luta</span>';tone(196,.4,'sawtooth',.08);gainXp(my,4)}
+    if(R.win){const dn=bWin(0);bKO(1);const paid=battlePay();line='<big>Vitória! 🏆</big><span>'+dn+' · +10 XP'+(paid?' · +1 moeda 🪙':' · limite de moedas por hora')+'</span>';[523,659,784,1046,1318].forEach((f,k)=>setTimeout(()=>tone(f,.18,'triangle',.1),k*110));gainXp(my,10)}
+    else{bKO(0);const dn=bWin(1);line='<big>Derrota 💔</big><span>+4 XP pela luta</span>';tone(196,.4,'sawtooth',.08);gainXp(my,4)}
     $('bRes').innerHTML=line;$('bGo').textContent='⚔️ Lutar de novo';$('bGo').disabled=$('bOther').disabled=$('bClose').disabled=false;BT.busy=false;
     // depois de ganhar XP o nível pode ter mudado: atualiza o meu lado e sorteia outro adversário
-    BT.me=bStats({i:my,lv:lvOf(my)});bFill('Me',BT.me);BT.op=pickOpp(my);bFill('Op',BT.op)},R.log.length*850+700)}
+    BT.me=bStats({i:my,lv:lvOf(my)});$('bMeSt').textContent=(ELNAME[ELEM[my]]||'')+' · Nv '+BT.me.lv+' · ⚔️ '+BT.me.atk+' · 🛡️ '+BT.me.def+' · ❤️ '+BT.me.hp;BT.fought=1},R.log.length*850+700)}
 $('cBat').addEventListener('click',openBattle);
 $('bGo').addEventListener('click',fightBattle);
-$('bOther').addEventListener('click',()=>{if(!BT||BT.busy)return;BT.op=pickOpp(BT.me.i);bFill('Op',BT.op);$('bRes').textContent='Novo adversário!';click(700)});
+$('bOther').addEventListener('click',()=>{if(!BT||BT.busy)return;BT.op=pickOpp(BT.me.i);BT.fought=0;bFill('Me',BT.me);bFill('Op',BT.op);bIdle();$('bRes').textContent='Novo adversário!';click(700)});
 $('bClose').addEventListener('click',()=>{if(BT&&BT.busy)return;$('battle').hidden=true;if(V.open&&V.cur!==undefined){renderCare();refreshVStats(V.cur)}});
 function levelUp(i,lv){float('⬆ Nível '+lv,'xp');[659,880,1175].forEach((f,k)=>setTimeout(()=>tone(f,.1,'triangle',.07),k*70))}
 function gainXp(i,n){const lv0=lvOf(i),st0=careStage(i),c=careOf(i);c.xp+=n;saveCare();const lv1=lvOf(i),st1=careStage(i);

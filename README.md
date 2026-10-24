@@ -56,3 +56,6 @@ Aquarim, Zephyra, Floriss, Voltik, Lunaris, Coralith, Lumina, Toxilys e Auren ag
 
 ## Ataques por elemento na batalha
 Cada golpe usa o elemento do bicho: raio (choque em zigue-zague), pedra/terra (arremesso), água/mar (jato), fogo/lava (bola de fogo), gelo, vento, sombra, flores/folhas/luz (chuva de pétalas), lua, veneno e sagrado. O dano só aparece quando o golpe acerta.
+
+## Movimento na luta
+Os dois lutadores ficam de frente (o da direita é espelhado). Respiram parados, investem para frente ao atacar (mais forte no crítico) e balançam ao levar o golpe. Quem perde deita acinzentado; quem ganha comemora com uma das três: três pulinhos, deitar e rolar ou correr em círculos, com estrelas e corações.

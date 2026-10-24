@@ -62,3 +62,7 @@ Os dois lutadores ficam de frente (o da direita é espelhado). Respiram parados,
 
 ## Loja e pedras raras
 Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A comida agora é item: cada vez que o bichinho come gasta 1 (começa com 3). As 6 pedras (Fogo, Ar, Terra, Planta, Fantasma, Psíquico) também aparecem raramente na máquina (cerca de 1% por pelúcia sorteada, no máximo uma por vez). Uso único: no bicho grande do mesmo elemento ela leva direto ao Nv 50 e evolui; depois a pedra some. Inventário e gastos ficam no aparelho (localStorage `garro-inv` e `garro-bonus`), sem servidor por enquanto.
+
+### Cores conferidas com a referência
+- Magmord (preto com lava), Glacien (cristais azuis), Draksel (vermelho) e Petrun (pedra cinza com musgo) foram repintados em `models/skins/` a partir dos modelos Tripo já enviados. Os .glb não mudaram.
+- Ainda pedem modelo novo do Tripo para ficarem iguais na forma: Flarion e Nimbri (hoje feitos em código) e Petrun (o modelo atual é um golem de lava).

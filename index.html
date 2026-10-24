@@ -126,6 +126,10 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .bcard.op.atk img{animation-name:batk2}@keyframes batk2{50%{transform:translateX(-24px) scale(1.12)}}
 .bcard b{font-size:14px;color:#fff}.bcard small{font-size:12px;color:var(--dim);font-weight:800}
 .bhp{width:100%;height:9px;border-radius:9px;background:rgba(255,255,255,.14);overflow:hidden}.bhp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#5ce08a,#9af06a);transition:width .45s}
+.bfield{position:relative}
+.bfx{position:absolute;inset:-40px 0;pointer-events:none;overflow:visible;z-index:5}
+.bfx i{position:absolute;left:0;top:0;font-style:normal;font-size:34px;line-height:1;will-change:transform,opacity;filter:drop-shadow(0 0 8px var(--c,#fff))}
+.bfx .flash{position:absolute;border-radius:50%;width:140px;height:140px;margin:-70px 0 0 -70px;background:radial-gradient(circle,var(--c) 0%,transparent 68%);opacity:0}
 .bvs{font-family:var(--display);font-size:30px;color:#ff5a7a}
 .bdmg{position:absolute;top:8%;font-family:var(--display);font-size:30px;color:#fff;text-shadow:0 2px 0 #c21f4a,0 0 12px #ff5a7a;animation:bdm .8s ease-out forwards;pointer-events:none}
 @keyframes bdm{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-44px)}}
@@ -256,7 +260,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 
 <div class="battle" id="battle" hidden>
   <h3>Batalha</h3>
-  <div class="bfield">
+  <div class="bfield"><div class="bfx" id="bFx"></div>
     <div class="bcard me" id="bMe"><img id="bMeImg" alt=""><b id="bMeName"></b><small id="bMeSt"></small><div class="bhp"><i id="bMeHp"></i></div></div>
     <div class="bvs">VS</div>
     <div class="bcard op" id="bOp"><img id="bOpImg" alt=""><b id="bOpName"></b><small id="bOpSt"></small><div class="bhp"><i id="bOpHp"></i></div></div>
@@ -1767,7 +1771,7 @@ let BT=null;
 function bStats(f){const S=statsAt(f.i,f.lv);return Object.assign({},f,S)}
 function pickOpp(my){const myLv=lvOf(my);const same=Math.random()<.75;let j;do{j=Math.floor(Math.random()*NPL)}while(j===my||(same&&(j<CH0)!==(my<CH0)));const lv=Math.max(1,Math.min(capOf(j),Math.round(myLv*(.75+Math.random()*.5))));return bStats({i:j,lv})}
 function bName(f){return evName(f.i,f.i<CH0&&f.lv>=EVO_LV?1:0)}
-function bFill(side,f){$('b'+side+'Img').src=PLUSH[f.i].img;$('b'+side+'Name').textContent=bName(f);$('b'+side+'St').textContent='Nv '+f.lv+' · ⚔️ '+f.atk+' · 🛡️ '+f.def+' · ❤️ '+f.hp;$('b'+side+'Hp').style.width='100%'}
+function bFill(side,f){$('b'+side+'Img').src=PLUSH[f.i].img;$('b'+side+'Name').textContent=bName(f);$('b'+side+'St').textContent=(ELNAME[ELEM[f.i]]||'')+' · Nv '+f.lv+' · ⚔️ '+f.atk+' · 🛡️ '+f.def+' · ❤️ '+f.hp;$('b'+side+'Hp').style.width='100%'}
 function openBattle(){const i=V.cur;if(i===undefined)return;audio();BT={me:bStats({i,lv:lvOf(i)}),busy:false,done:false};BT.op=pickOpp(i);
   bFill('Me',BT.me);bFill('Op',BT.op);$('bRes').innerHTML='Quem tem mais poder leva vantagem, mas a sorte conta!';$('bGo').disabled=$('bOther').disabled=$('bClose').disabled=false;$('bGo').textContent='⚔️ Lutar!';$('battle').hidden=false}
 function simBattle(a,b){let ha=a.hp,hb=b.hp,turn=Math.random()<.5?0:1;const log=[];
@@ -1776,19 +1780,53 @@ function simBattle(a,b){let ha=a.hp,hb=b.hp,turn=Math.random()<.5?0:1;const log=
   return{log,win:hb<=0}}
 function battlePay(){let o={t:0,n:0};try{o=JSON.parse(localStorage.getItem('garro-bpay')||'')||o}catch(e){}
   const now=Date.now();if(now-o.t>36e5)o={t:now,n:0};let paid=0;if(o.n<5){o.n++;paid=1;bonus++;coins++;saveBonus();hud()}try{localStorage.setItem('garro-bpay',JSON.stringify(o))}catch(e){}return paid}
+
+/* ---------- efeitos de ataque por elemento ---------- */
+const BFX={
+ electric:{e:['⚡'],m:'bolt',c:'#ffe23a',n:3,f:[1200,60]},
+ stone:{e:['🪨'],m:'arc',c:'#b8a58a',n:1,f:[110,.2]},earth:{e:['🪨','🟫'],m:'arc',c:'#a8794a',n:2,f:[120,.2]},
+ water:{e:['💧','💦','💧','💦','💧'],m:'jet',c:'#4ab4ff',n:7,f:[500,.12]},sand:{e:['🌊','💧','🌊'],m:'jet',c:'#38d0e8',n:5,f:[420,.14]},
+ embers:{e:['🔥'],m:'orb',c:'#ff7a2a',n:1,big:1.7,f:[200,.2]},lava:{e:['🔥','🌋'],m:'arc',c:'#ff4a1a',n:2,big:1.3,f:[150,.2]},
+ ice:{e:['❄️'],m:'spray',c:'#aee8ff',n:4,f:[900,.1]},
+ cloud:{e:['💨','🌪️'],m:'jet',c:'#d8ecff',n:5,f:[300,.1]},
+ shadow:{e:['🟣','🌑'],m:'orb',c:'#a050ff',n:2,f:[90,.25]},
+ flowers:{e:['🌸'],m:'spray',c:'#ff7ac0',n:6,f:[600,.1]},petals:{e:['✨','🌸'],m:'spray',c:'#ffe0f0',n:6,f:[700,.1]},leaves:{e:['🍃','🌿'],m:'spray',c:'#7ad04a',n:6,f:[500,.1]},
+ stars:{e:['⭐','🌙'],m:'spray',c:'#ffd870',n:5,f:[800,.1]},
+ swamp:{e:['☠️','🟢'],m:'orb',c:'#9ae03a',n:3,f:[130,.2]},
+ gold:{e:['✨','☀️'],m:'bolt',c:'#ffe28a',n:3,f:[1000,.1]}};
+BFX.stone=BFX.stone;
+function bFx(from,to,el,crit){const F=BFX[el]||BFX.earth,fld=$('bFx');if(!fld)return;const fr=from.getBoundingClientRect(),tr=to.getBoundingClientRect(),pr=fld.getBoundingClientRect();
+  const ax=fr.left+fr.width/2-pr.left,ay=fr.top+fr.height*.4-pr.top,bx=tr.left+tr.width/2-pr.left,by=tr.top+tr.height*.4-pr.top;const dx=bx-ax,dy=by-ay;
+  const col=F.c,n=F.n+(crit?2:0);
+  for(let k=0;k<n;k++){const el2=document.createElement('i');el2.textContent=F.e[k%F.e.length];el2.style.setProperty('--c',col);const sz=(F.big||1)*(crit?1.35:1);el2.style.fontSize=(34*sz)+'px';fld.appendChild(el2);
+    const d=F.m==='bolt'?k*90:F.m==='jet'?k*55:F.m==='spray'?k*50:k*140,jx=(Math.random()-.5)*30,jy=(Math.random()-.5)*30;let kf;
+    if(F.m==='arc'){kf=[{transform:`translate(${ax}px,${ay}px) rotate(0deg) scale(.6)`,opacity:1},{transform:`translate(${ax+dx*.5}px,${ay+dy*.5-120}px) rotate(180deg) scale(1.2)`,opacity:1,offset:.5},{transform:`translate(${bx}px,${by}px) rotate(400deg) scale(1)`,opacity:1}]}
+    else if(F.m==='bolt'){const pts=[];for(let q=0;q<=6;q++){const t=q/6;pts.push({transform:`translate(${ax+dx*t+(q%2?18:-18)*(q>0&&q<6)+jx*t}px,${ay+dy*t+(q%2?-14:14)*(q>0&&q<6)}px) scale(${.8+.5*(q%2)}) rotate(${(q%2?20:-20)}deg)`,opacity:q==6?.9:1,offset:t})}kf=pts}
+    else if(F.m==='jet'){kf=[{transform:`translate(${ax}px,${ay}px) scale(.5)`,opacity:0},{transform:`translate(${ax+dx*.2}px,${ay+dy*.2+jy*.3}px) scale(1)`,opacity:1,offset:.2},{transform:`translate(${bx+jx}px,${by+jy}px) scale(1.1)`,opacity:1}]}
+    else if(F.m==='spray'){const sx=(Math.random()-.5)*120,sy=-30-Math.random()*60;kf=[{transform:`translate(${ax}px,${ay}px) scale(.4) rotate(0)`,opacity:0},{transform:`translate(${ax+dx*.35+sx*.5}px,${ay+dy*.35+sy}px) scale(1) rotate(120deg)`,opacity:1,offset:.35},{transform:`translate(${bx+jx}px,${by+jy}px) scale(.9) rotate(300deg)`,opacity:1}]}
+    else{kf=[{transform:`translate(${ax}px,${ay}px) scale(.4)`,opacity:1},{transform:`translate(${bx}px,${by}px) scale(1.2)`,opacity:1}]}
+    const an=el2.animate(kf,{duration:420,delay:d,easing:F.m==='arc'?'ease-in':'ease-out',fill:'both'});
+    an.onfinish=()=>{const sp=document.createElement('i');sp.textContent=F.e[k%F.e.length];sp.style.setProperty('--c',col);sp.style.fontSize=(40*sz)+'px';sp.style.transform=`translate(${bx+jx}px,${by+jy}px)`;fld.appendChild(sp);
+      sp.animate([{opacity:1,transform:`translate(${bx+jx}px,${by+jy}px) scale(.8)`},{opacity:0,transform:`translate(${bx+jx*2}px,${by+jy*2-20}px) scale(1.8)`}],{duration:380,fill:'forwards'}).onfinish=()=>sp.remove();el2.remove()}}
+  const fl=document.createElement('div');fl.className='flash';fl.style.setProperty('--c',col);fl.style.left=bx+'px';fl.style.top=by+'px';fld.appendChild(fl);
+  fl.animate([{opacity:0,transform:'scale(.4)'},{opacity:.95,transform:'scale(1.2)',offset:.3},{opacity:0,transform:'scale(1.6)'}],{duration:520,delay:360+(n-1)*(F.m==='bolt'?90:F.m==='jet'?55:F.m==='spray'?50:140)*.6}).onfinish=()=>fl.remove();
+  // tom do ataque
+  const t=F.f;if(t[0]>=1000)[1400,900,1500,700].forEach((q,i)=>setTimeout(()=>tone(q,.05,'sawtooth',.06),i*60));else tone(t[0]+Math.random()*30,.18,F.m==='jet'?'sine':'square',.07)}
 function fightBattle(){if(!BT||BT.busy)return;BT.busy=true;$('bGo').disabled=$('bOther').disabled=$('bClose').disabled=true;const me=BT.me,op=BT.op,R=simBattle(me,op);$('bRes').textContent='Lutando...';
   R.log.forEach((e,k)=>setTimeout(()=>{
-    const A=$(e.t?'bOp':'bMe'),D=$(e.t?'bMe':'bOp');A.classList.add('atk');D.classList.add('hit');setTimeout(()=>{A.classList.remove('atk');D.classList.remove('hit')},360);
+    const A=$(e.t?'bOp':'bMe'),D=$(e.t?'bMe':'bOp');A.classList.add('atk');setTimeout(()=>A.classList.remove('atk'),360);
+    bFx(A,D,ELEM[(e.t?op:me).i],e.crit);
+    setTimeout(()=>{D.classList.add('hit');setTimeout(()=>D.classList.remove('hit'),360);
     $('bMeHp').style.width=Math.round(e.ha/me.hp*100)+'%';$('bOpHp').style.width=Math.round(e.hb/op.hp*100)+'%';
     const f=document.createElement('span');f.className='bdmg';f.textContent=(e.crit?'💥 ':'')+'-'+e.d;f.style.left=(e.t?'18%':'68%');D.appendChild(f);setTimeout(()=>f.remove(),850);
-    tone(e.crit?220:150+Math.random()*50,.09,'square',.07)},k*650));
+    tone(e.crit?220:150+Math.random()*50,.09,'square',.07)},430)},k*850));
   setTimeout(()=>{
     const my=me.i;let line;
     if(R.win){const paid=battlePay();line='<big>Vitória! 🏆</big><span>+10 XP'+(paid?' · +1 moeda 🪙':' · limite de moedas por hora')+'</span>';[523,659,784,1046,1318].forEach((f,k)=>setTimeout(()=>tone(f,.18,'triangle',.1),k*110));gainXp(my,10)}
     else{line='<big>Derrota 💔</big><span>+4 XP pela luta</span>';tone(196,.4,'sawtooth',.08);gainXp(my,4)}
     $('bRes').innerHTML=line;$('bGo').textContent='⚔️ Lutar de novo';$('bGo').disabled=$('bOther').disabled=$('bClose').disabled=false;BT.busy=false;
     // depois de ganhar XP o nível pode ter mudado: atualiza o meu lado e sorteia outro adversário
-    BT.me=bStats({i:my,lv:lvOf(my)});bFill('Me',BT.me);BT.op=pickOpp(my);bFill('Op',BT.op)},R.log.length*650+700)}
+    BT.me=bStats({i:my,lv:lvOf(my)});bFill('Me',BT.me);BT.op=pickOpp(my);bFill('Op',BT.op)},R.log.length*850+700)}
 $('cBat').addEventListener('click',openBattle);
 $('bGo').addEventListener('click',fightBattle);
 $('bOther').addEventListener('click',()=>{if(!BT||BT.busy)return;BT.op=pickOpp(BT.me.i);bFill('Op',BT.op);$('bRes').textContent='Novo adversário!';click(700)});

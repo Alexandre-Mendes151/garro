@@ -53,3 +53,6 @@ Um único arquivo HTML, sem instalação. Usa Matter.js (física) e Three.js (3D
 
 ## Modelos Tripo próprios (9 bichos)
 Aquarim, Zephyra, Floriss, Voltik, Lunaris, Coralith, Lumina, Toxilys e Auren agora usam o corpo e a textura do próprio modelo Tripo (antes eram "primos" repintados de outros corpos). Arquivos em `models/` (versão completa; a versão leve vai embutida na demo/artefato). Lumina, Toxilys e Auren vieram juntos num único GLB e foram separados por componente. Na forma evoluída recebem coroa/halo e aura (as peças antigas foram tiradas para não duplicar asas/flores).
+
+## Ataques por elemento na batalha
+Cada golpe usa o elemento do bicho: raio (choque em zigue-zague), pedra/terra (arremesso), água/mar (jato), fogo/lava (bola de fogo), gelo, vento, sombra, flores/folhas/luz (chuva de pétalas), lua, veneno e sagrado. O dano só aparece quando o golpe acerta.

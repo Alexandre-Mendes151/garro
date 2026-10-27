@@ -1131,6 +1131,8 @@ function initViewer(){
     else if(!moved&&dt<350){const part=hit(e);if(part)tap(part,e)}down=null};
   cvs.addEventListener('pointerup',up);cvs.addEventListener('pointercancel',e=>{if(V.mode==='terra'){tUp(e);return}clearTimeout(lp);if(V.st==='belly')setState('shake',1.5);down=null});
   addEventListener('resize',()=>V.open&&fit());
+// a área do bicho muda de tamanho quando os botões de baixo aparecem/somem: sem reajustar, a imagem esticava
+if(window.ResizeObserver){new ResizeObserver(()=>{if(V.open&&V.renderer)fit()}).observe($('v3d'))}
   return true;
 }
 function hit(e){
@@ -1145,7 +1147,8 @@ function fit(){
   V.renderer.setSize(w,h,false);V.cam.aspect=w/h;V.cam.updateProjectionMatrix();
   const visH=2*6*Math.tan(18*Math.PI/180),visW=visH*V.cam.aspect;
   const gg=Math.max(1,(V.C&&V.C.gs)||1),Sxz=V.size.xz*gg,Sy=V.size.y*gg;
-  const k=Math.min(visW*.7/Sxz,visH*.5/Sy,visW*.62/Math.max(Sy,1e-3));V.spin.scale.setScalar(k);
+  const nar=visW<visH*1.2;// tela estreita (celular): o bicho ocupa mais da área
+  const k=Math.min(visW*(nar?.86:.7)/Sxz,visH*(nar?.6:.5)/Sy,visW*(nar?.74:.62)/Math.max(Sy,1e-3));V.spin.scale.setScalar(k);
   const ground=-k*V.size.y/2-.15;V.spin.position.y=ground+k;V.k=k;V.ground=ground;V.floorR=Math.min(visW*.5,visH*.42,V.size.xz*k*1.15);
   V.shadow.position.y=ground+.01;V.shadow.scale.set(V.size.xz*k*1.1,V.size.xz*k*.8,1);
 }

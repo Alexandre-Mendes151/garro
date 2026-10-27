@@ -86,6 +86,8 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .vhead p{margin:4px 0 0;color:var(--amber);font-weight:800;font-size:13px}
 .vclose{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.1);font-size:20px;flex:none;touch-action:manipulation}
 .vstage{position:relative;min-height:0;overflow:hidden}
+/* celular: a área do bicho fica com ~metade da tela e o painel de baixo rola junto */
+@media (max-width:640px){.viewer{overflow-y:auto;grid-template-rows:auto max(300px,52vh) auto}}
 #v3d{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;touch-action:none;cursor:grab}
 .vfoot{display:grid;gap:10px;text-align:center}
 .vfoot p{margin:0;color:var(--dim);font-size:13px}

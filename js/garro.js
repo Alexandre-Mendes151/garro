@@ -45,7 +45,7 @@ async function carregarEstado(){
 
 async function entrarComGoogle(){
   showAuthState('Loading');
-  const {error}=await sb.auth.signInWithOAuth({provider:'google'});
+  const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
   if(error)showAuthState('Error');
 }
 

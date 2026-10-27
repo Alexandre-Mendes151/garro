@@ -69,7 +69,7 @@ Um único arquivo HTML, sem instalação. Usa Matter.js (física) e Three.js (3D
 - **Os redondos não evoluem.** São só prêmios da garra, em uma forma só, e aparecem em maior quantidade (cerca de 70% da pilha, até 3 iguais). Pegar repetido só soma na coleção.
 - **Quem evolui são as 20 pelúcias grandes.** Comida, Carinho e Brincar (as voltas em círculo) enchem barras e dão XP; com 60 XP ela vira a forma da folha de evolução (Terranox Prime, Aquarim Leviatã, Flarion Inferno... Auren Divino): maior, com brilho, faíscas e anel na cor do elemento. Repetida dá +20 XP.
 - **Redondos guardados e vendáveis:** os redondos pegos ficam na coleção e repetidos somam (×2, ×3...). Na tela de cada redondo há **Vender repetidas**: a cada 2 repetidas vendidas, 1 moeda (sempre fica 1 de cada). Eles também podem ser alimentados (Comida, Carinho, Brincar), só que sem evoluir.
-- **Servidor:** a migração `0003_redondos_e_venda.sql` e a função `sync-estado` (ações `capture` até o id 42 e `sell`) precisam ser publicadas no Supabase. Enquanto isso não for feito, o jogo guarda os redondos e as moedas da venda no próprio aparelho (junta com o servidor pelo maior valor).
+- **Servidor:** publicado — migração `0003_redondos_e_venda.sql` e `sync-estado` (ações `capture` até o id 42 e `sell`) já estão no ar.
 - **Formas evoluídas (Nível 50):** cada um dos 20 grandes ganha peças da folha de evolução: asas (Zephyra, Umbros, Draksel, Ignovus, Lumina, Auren, Flarion), cristais (Glacien, Toxilys), espinhos (Terranox, Magmord), flores, coral, musgo, auréola etc. Ficam em `EVOX` no código. A folha de referência está em `docs/referencia-evolucao.png`. São peças sobre o corpo atual, não modelos 3D novos.
 - **Nível, Ataque, Defesa e Vida** nos 43 bichinhos (tabela `STAT` no código). Os redondos têm bem menos poder e nível máximo 30; os 20 grandes chegam ao nível 100 e **evoluem no nível 50** (poder ×1,35). O nível sobe com XP de Comida, Carinho, Brincar e batalhas.
 - **Batalha:** botão "Batalhar" na tela do bichinho. Sorteia um adversário (75% da mesma categoria), a luta é automática por rodadas. Vencer dá +10 XP e 1 moeda (no máximo 5 moedas por hora); perder dá +4 XP.
@@ -109,7 +109,7 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 - **Moedas infinitas só para desenvolvedores:** as contas Google `alexandre.et@gmail.com` e `joaobazanela@gmail.com` (lista `DEV_EMAILS`) veem ∞ e jogam, compram e trocam sem gastar. Para todos os outros nada muda. A cópia de teste dos devs (artefato do Claude) já abre com ∞. No demo público sem login começa normal; nos dois, 7 toques no contador de moedas ligam/desligam o modo dev, só naquele aparelho.
 - **Reposição mais lenta:** a máquina não enche mais de volta a cada jogada. Cai 1 bichinho novo a cada 4 jogadas quando a pilha está baixa; só repõe 3 de uma vez se ficar quase vazia (menos de 6).
 - **Trocar bichinhos da máquina:** botão abaixo dos controles, custa 10 moedas (`SWAP_COST`). Tira todos e sorteia uma pilha nova.
-- **Venda de um em um:** cada redondo vendido vale 1 moeda e dá para vender até o último. **Servidor:** publicar a migração `0004_venda_um_a_um.sql` e a função `sync-estado` atualizada (aceita `qty` a partir de 1). Até lá, a venda é guardada no aparelho.
+- **Venda de um em um:** cada redondo vendido vale 1 moeda e dá para vender até o último. **Servidor:** publicado — migração `0004_venda_um_a_um.sql` no ar.
 
 ### Itens e pedras novas
 - Botão **Itens 🎒** no topo: mostra quanta comida e quantas pedras você tem (as que você tem aparecem primeiro). Tocando numa pedra, lista os seus bichinhos que podem evoluir com ela; escolher um abre a tela dele e evolui na hora.
@@ -137,7 +137,7 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 
 ### Gigante com cara de gigante, venda de qualquer pelúcia e máquina pequena
 - **Gigante:** cai de cima do vidro com estrondo, tremor e poeira, e aparece o nome dele grande; três redondinhos de enfeite aos pés (não saem como prêmio) e régua em centímetros no vidro para comparar; quando a garra segura, o cabo treme, a subida e a volta ficam mais lentas e o motor fica mais grave; máquina com placa dourada "★ GIGANTE ★", luzes piscando e fundo próprio; ganhar dá tremor, confete e um selo 🏆 na coleção (`garro-giant`).
-- **Venda:** qualquer pelúcia pode ser vendida, até a última. Redondo = 1 moeda, bicho especial (que evolui) = 30 moedas (toque duas vezes para confirmar), pelúcia gigante = 40 moedas (botão próprio). **Servidor:** publicar `0005_venda_especiais.sql` e a `sync-estado` atualizada (aceita ids 0 a 42). A venda do gigante fica no aparelho por enquanto.
+- **Venda:** qualquer pelúcia pode ser vendida, até a última. Redondo = 1 moeda, bicho especial (que evolui) = 30 moedas (toque duas vezes para confirmar), pelúcia gigante = 40 moedas (botão próprio). **Servidor:** publicado — `0005_venda_especiais.sql` no ar. A venda do gigante ainda fica só no aparelho.
 - **Máquina pequena:** mais redondos (86% da pilha) e uma parede invisível sobre a divisória para nenhum bicho solto escorregar para o buraco do prêmio sem ser pego.
 - **Artefato:** as 14 formas evoluídas agora vão junto com o artefato (arquivos `models/*_evo.glb.txt`), sem depender de internet externa.
 
@@ -152,3 +152,11 @@ Botão 🛒 Loja no topo. Comida custa 5 moedas e Pedra de evolução 400. A com
 ### Correções: gigante capturado e evoluídos sem deformar
 - Gigante: enquanto está na garra ele atravessa o vidro e a divisória; se a garra o leva até a porta do prêmio, conta como capturado e cai pela portinhola. Testado com 8 gigantes diferentes: 8 capturados.
 - Formas evoluídas não dobram mais cabeça e cauda por dentro do modelo (isso esticava o rosto, como no Umbros Sombrio); elas se mexem inteiras.
+
+### Login, economia e robustez (26-27/10)
+- **Login com Google corrigido de ponta a ponta:** provedor Google estava desabilitado no Supabase (faltava Client ID/Secret), Site URL ainda apontava pro localhost e a chamada de login não fixava a página de volta — os três foram corrigidos e testados.
+- **Reposição (antigo "+15 moedas") agora é +1 moeda a cada 10 minutos** (`rpc_refill`), em vez de +15 a cada 20 segundos — fechava uma brecha de moedas ilimitadas.
+- **`rpc_capture` exige um tempo mínimo de jogo** entre começar a rodada e capturar, pra fechar o caminho mais óbvio de abuso via chamada direta da API (não substitui validar a física em si, que seguiu fora de escopo).
+- **Botão "Zerar coleção" removido** — era um placeholder desabilitado que nunca chegou a sincronizar com o servidor.
+- **Scripts de CDN (Matter/Three/Supabase) carregam com `defer`**, sem travar o primeiro desenho da tela; o carregamento dos dados do jogo só começa depois que o DOM está pronto, pra garantir a ordem certa.
+- **Relatório de erros:** erros do navegador (`window.onerror`, promises rejeitadas, falhas de sincronização) agora são gravados na tabela `client_errors` do Supabase (só grava, ninguém lê pelo app — é pro time conferir no painel). O jogador vê uma mensagem amigável pedindo pra tentar de novo, nunca o erro técnico.

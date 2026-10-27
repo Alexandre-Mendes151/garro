@@ -21,16 +21,32 @@ function showAuthState(name){
   ['Default','Loading','Error'].forEach(n=>{$('auth'+n).hidden=n!==name});
 }
 
+/* ---------- relatório de erros (vai pro Supabase, nunca pro jogador em texto técnico) ---------- */
+function logErro(context,err){
+  try{
+    const message=(err&&err.message)||String(err||'erro desconhecido');
+    const stack=(err&&err.stack)||null;
+    sb.from('client_errors').insert({context,message,stack,url:location.href}).then(()=>{},()=>{});
+  }catch(e){}
+}
+function erroAmigavel(msg){
+  banner(msg||'Ops! Algo deu errado.','Tente de novo em instantes');
+}
+addEventListener('error',e=>{logErro('window.onerror',e.error||e.message)});
+addEventListener('unhandledrejection',e=>{logErro('unhandledrejection',e.reason)});
+
 async function syncEstado(action,extra){
-  const {data:{session:s}}=await sb.auth.getSession();
-  if(!s)return null;
-  const res=await fetch(SUPABASE_URL+'/functions/v1/sync-estado',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+s.access_token,'Content-Type':'application/json'},
-    body:JSON.stringify(Object.assign({action},extra||{}))
-  });
-  if(!res.ok)return null;
-  return res.json();
+  try{
+    const {data:{session:s}}=await sb.auth.getSession();
+    if(!s)return null;
+    const res=await fetch(SUPABASE_URL+'/functions/v1/sync-estado',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+s.access_token,'Content-Type':'application/json'},
+      body:JSON.stringify(Object.assign({action},extra||{}))
+    });
+    if(!res.ok){logErro('syncEstado:'+action,'HTTP '+res.status);return null}
+    return res.json();
+  }catch(e){logErro('syncEstado:'+action,e);return null}
 }
 
 async function carregarEstado(){
@@ -313,10 +329,10 @@ function start(){
   if(MACH===2){if(!canPay(GCOST)){$('hint').textContent='A máquina gigante custa '+GCOST+' moedas por jogada.';banner('Moedas insuficientes','Gigante: '+GCOST+' 🪙 por jogada');return false}
     claw.state='move';roundTime=ROUND;roundWin=false;spend(GCOST);claw.force=losses>=3?1250+Math.random()*150:700+Math.random()*600;
     $('hint').textContent='Mire no meio do gigante e aperte PEGAR';click(500);hud();return true}
-  if(!DEV&&coins<=0){$('hint').textContent='Sem moedas. Toque em +15 moedas abaixo.';banner('Sem moedas');return false}
+  if(!DEV&&coins<=0){$('hint').textContent='Sem moedas. Toque em +1 moeda abaixo.';banner('Sem moedas');return false}
   claw.state='move';roundTime=ROUND;roundWin=false;
   if(!DEV){const useBonus=bonus>0&&coins-bonus<=0;coins--;
-    if(useBonus){bonus--;saveBonus()}else syncEstado('round_start').then(r=>{if(r)coins=r.coins+bonus});}
+    if(useBonus){bonus--;saveBonus()}else syncEstado('round_start').then(r=>{if(r)coins=r.coins+bonus;else{coins++;erroAmigavel('Não deu pra confirmar a jogada — a próxima pode não valer')}});}
   // real machines vary the claw voltage each play; after a losing streak they pay out
   claw.force=losses>=6?1150+Math.random()*150:520+Math.random()*560;
   $('hint').textContent='Posicione e aperte PEGAR';click(500);hud();return true;
@@ -457,16 +473,9 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>{if(e.key==='ArrowLeft'&&dir<0||e.key==='ArrowRight'&&dir>0)dir=0});
 $('refill').addEventListener('click',()=>{
-  syncEstado('refill').then(r=>{if(r){coins=r.coins+bonus;hud()}});
+  syncEstado('refill').then(r=>{if(r){coins=r.coins+bonus;hud()}else erroAmigavel('Ainda não deu pra repor — espere um pouco e tente de novo')});
   $('hint').textContent='Toque nas setas para jogar'
 });
-let arm=0;
-$('reset').addEventListener('click',()=>{
-  if(!arm){$('reset').textContent='Toque de novo para zerar';arm=setTimeout(()=>{arm=0;$('reset').textContent='Zerar coleção'},2500);return}
-  clearTimeout(arm);arm=0;$('reset').textContent='Zerar coleção';coll={};try{localStorage.removeItem('garra-real')}catch(e){}$('detail').hidden=true;renderShelf();hud();
-});
-$('reset').disabled=true;
-$('reset').title='Em breve: ainda não sincroniza com a conta. Desativado por enquanto.';
 
 async function abrirRanking(){
   const {data,error}=await sb.from('ranking').select('*').order('wins',{ascending:false}).limit(50);

@@ -21,6 +21,15 @@ Deno.serve(async (req) => {
     return json({ error: "method_not_allowed" }, 405);
   }
 
+  try {
+    return await handle(req);
+  } catch (e) {
+    console.error("sync-estado: erro não tratado", e);
+    return json({ error: "internal_error" }, 500);
+  }
+});
+
+async function handle(req: Request): Promise<Response> {
   const authHeader = req.headers.get("Authorization") ?? "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -83,4 +92,4 @@ Deno.serve(async (req) => {
   }
 
   return json({ error: "unknown_action" }, 400);
-});
+}

@@ -1,0 +1,33 @@
+{
+  "versao": 1,
+  "percurso": [
+    {"id": "p01", "texto": "Pegue sua primeira pelúcia", "tipo": "capture", "meta": 1, "premio": 5, "icone": "🎯"},
+    {"id": "p02", "texto": "Dê comida a um bichinho 3 vezes", "tipo": "feed", "meta": 3, "premio": 5, "icone": "🍓"},
+    {"id": "p03", "texto": "Pegue 5 pelúcias", "tipo": "capture", "meta": 5, "premio": 10, "icone": "🧸"},
+    {"id": "p04", "texto": "Vença 1 batalha", "tipo": "battle_win", "meta": 1, "premio": 10, "icone": "⚔️"},
+    {"id": "p05", "texto": "Faça carinho 10 vezes", "tipo": "pet", "meta": 10, "premio": 10, "icone": "🤍"},
+    {"id": "p06", "texto": "Junte 10 pelúcias diferentes", "tipo": "distinct", "meta": 10, "premio": 15, "icone": "📚"},
+    {"id": "p07", "texto": "Leve um bichinho grande ao Nv 10", "tipo": "level_big", "meta": 10, "premio": 15, "icone": "⭐"},
+    {"id": "p08", "texto": "Brinque 10 vezes", "tipo": "play", "meta": 10, "premio": 15, "icone": "🎾"},
+    {"id": "p09", "texto": "Vença 5 batalhas", "tipo": "battle_win", "meta": 5, "premio": 20, "icone": "🏆"},
+    {"id": "p10", "texto": "Compre ou use uma pedra de evolução", "tipo": "stone", "meta": 1, "premio": 20, "icone": "💎"},
+    {"id": "p11", "texto": "Pegue 25 pelúcias", "tipo": "capture", "meta": 25, "premio": 20, "icone": "🧺"},
+    {"id": "p12", "texto": "Jogue na Máquina Gigante", "tipo": "giant_play", "meta": 1, "premio": 25, "icone": "🦖"},
+    {"id": "p13", "texto": "Junte 20 pelúcias diferentes", "tipo": "distinct", "meta": 20, "premio": 25, "icone": "📖"},
+    {"id": "p14", "texto": "Pegue uma pelúcia gigante", "tipo": "giant_capture", "meta": 1, "premio": 30, "icone": "🏅"},
+    {"id": "p15", "texto": "Leve um bichinho grande ao Nv 50", "tipo": "level_big", "meta": 50, "premio": 30, "icone": "🌟"},
+    {"id": "p16", "texto": "Evolua um gigante", "tipo": "giant_evolve", "meta": 1, "premio": 30, "icone": "👑"},
+    {"id": "p17", "texto": "Complete 30 pelúcias diferentes", "tipo": "distinct", "meta": 30, "premio": 30, "icone": "🎖️"}
+  ],
+  "diarias_por_dia": 3,
+  "diarias": [
+    {"id": "d_pegar3", "texto": "Pegue 3 pelúcias", "tipo": "capture", "meta": 3, "premio": 10, "icone": "🧸"},
+    {"id": "d_pegar5", "texto": "Pegue 5 pelúcias", "tipo": "capture", "meta": 5, "premio": 15, "icone": "🧺"},
+    {"id": "d_carinho5", "texto": "Faça carinho 5 vezes", "tipo": "pet", "meta": 5, "premio": 5, "icone": "🤍"},
+    {"id": "d_comida3", "texto": "Dê comida 3 vezes", "tipo": "feed", "meta": 3, "premio": 5, "icone": "🍓"},
+    {"id": "d_brincar3", "texto": "Brinque 3 vezes", "tipo": "play", "meta": 3, "premio": 5, "icone": "🎾"},
+    {"id": "d_vencer1", "texto": "Vença 1 batalha", "tipo": "battle_win", "meta": 1, "premio": 5, "icone": "⚔️"},
+    {"id": "d_vencer2", "texto": "Vença 2 batalhas", "tipo": "battle_win", "meta": 2, "premio": 10, "icone": "🏆"},
+    {"id": "d_gigante", "texto": "Jogue 1 vez na Máquina Gigante", "tipo": "giant_play", "meta": 1, "premio": 15, "icone": "🦖"}
+  ]
+}

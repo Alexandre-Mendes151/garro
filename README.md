@@ -48,6 +48,13 @@ Sylvorn e Terranox usam modelos 3D gerados a partir das fotos (pasta `models/`).
 ## Tecnologia
 Um único arquivo HTML, sem instalação. Usa Matter.js (física) e Three.js (3D), carregados de CDN.
 
+### Missões (migração 0008)
+- **Percurso:** 17 etapas em sequência (`data/missoes.json`), cada uma libera a próxima; ~315 moedas no total. **Diárias:** 3 por dia sorteadas da lista (iguais para todos, trocam à meia-noite de Brasília), 5 a 15 moedas cada.
+- Botão **Missões 🎯** no topo; ponto rosa quando tem prêmio para pegar. Código em `js/missoes.js` (carregado depois do `garro.js`, que só expõe `window.GARRO` e avisa os eventos com `garro:evento`).
+- **Banco (só estado):** `mission_counters` (quantas vezes fez cada coisa, no total e no dia) e `mission_claims` (prêmios pegos). As ações da 0007 somam nos contadores; `rpc_mission_claim` confere etapa anterior, progresso e se já pegou antes de pagar.
+- **A lista de missões não vai para o banco:** a `sync-estado` lê o `data/missoes.json` publicado no site (`MISSOES_URL`, cache de 5 min) e passa meta e prêmio para o banco conferir. Mudar uma missão = editar o JSON.
+- Sem login: progresso e prêmios ficam no aparelho.
+
 ### Pelúcias derivadas (textura dos modelos de referência)
 - `models/deer_base.glb`: corpo do Sylvorn sem chifres nem orelhas. Serve de molde para Flarion, Umbros, Voltik, Lunaris, Lumina e Auren, cada um com a pele pintada em `models/skins/<n>.jpg` e as partes próprias (orelhas, asas, cauda...).
 - `models/tex/fur.jpg` e `models/tex/scale.jpg`: pelagem e escamas tiradas do Sylvorn e do Terranox, aplicadas nas outras pelúcias 3D.

@@ -143,5 +143,47 @@ async function handle(req: Request): Promise<Response> {
     return call("rpc_import_local", { p_data: d }, "import_rejected");
   }
 
+  if (body.action === "mission_claim") {
+    const id = typeof body.id === "string" ? body.id : "";
+    const defs = await missoes();
+    if (!defs) return json({ error: "missoes_indisponiveis" }, 503);
+    const i = defs.percurso.findIndex((m) => m.id === id);
+    let m: Missao | undefined, daily = false, prev: string | null = null;
+    if (i >= 0) { m = defs.percurso[i]; prev = i > 0 ? defs.percurso[i - 1].id : null; }
+    else { m = diariasDoDia(defs, hojeBR()).find((x) => x.id === id); daily = true; }
+    if (!m) return json({ error: "missao_nao_disponivel" }, 400);
+    return call("rpc_mission_claim", { p_mission: m.id, p_daily: daily, p_kind: m.tipo, p_target: m.meta, p_reward: m.premio, p_prev: prev }, "mission_rejected");
+  }
+
   return json({ error: "unknown_action" }, 400);
+}
+
+// ---- missões: a lista (conteúdo do jogo) é o data/missoes.json publicado com o site; o banco só guarda o progresso ----
+type Missao = { id: string; tipo: string; meta: number; premio: number };
+type Missoes = { percurso: Missao[]; diarias: Missao[]; diarias_por_dia?: number };
+const MISSOES_URL = Deno.env.get("MISSOES_URL") ?? "https://joaobazanela.github.io/garro-app/data/missoes.json";
+let cacheMissoes: { t: number; d: Missoes } | null = null;
+async function missoes(): Promise<Missoes | null> {
+  if (cacheMissoes && Date.now() - cacheMissoes.t < 5 * 60 * 1000) return cacheMissoes.d;
+  try {
+    const r = await fetch(MISSOES_URL, { headers: { "cache-control": "no-cache" } });
+    if (!r.ok) return cacheMissoes?.d ?? null;
+    const d = await r.json() as Missoes;
+    if (!Array.isArray(d.percurso) || !Array.isArray(d.diarias)) return cacheMissoes?.d ?? null;
+    cacheMissoes = { t: Date.now(), d };
+    return d;
+  } catch (_e) {
+    return cacheMissoes?.d ?? null;
+  }
+}
+// dia no horário de Brasília (igual ao g_today() do banco)
+function hojeBR(): string {
+  return new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
+}
+// mesmo sorteio do js/missoes.js: as 3 diárias do dia são iguais para todos
+function diariasDoDia(d: Missoes, dia: string): Missao[] {
+  const n = d.diarias.length, k = Math.min(d.diarias_por_dia ?? 3, n), out: number[] = [];
+  let s = (Math.floor(Date.parse(dia + "T00:00:00Z") / 864e5) * 2654435761) >>> 0;
+  while (out.length < k) { s = (Math.imul(s, 1103515245) + 12345) >>> 0; const i = s % n; if (!out.includes(i)) out.push(i); }
+  return out.map((i) => d.diarias[i]);
 }

@@ -967,7 +967,7 @@ function evoTex(i,map){if(EVT[i])return EVT[i];const img=map.image;if(!img||!img
     d[p]=Math.max(0,Math.min(255,r*255));d[p+1]=Math.max(0,Math.min(255,g*255));d[p+2]=Math.max(0,Math.min(255,b*255))}
   x.putImageData(D,0,0);const t=new THREE.CanvasTexture(cv);t.flipY=map.flipY;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.wrapS=map.wrapS;t.wrapT=map.wrapT;return EVT[i]=t}
 function applyEvoTex(i){const C=V.C;if(!C||!C.obj)return;C.obj.traverse(o=>{if(o.isMesh&&!o.userData.keep&&o.userData.baseMap){o.material.map=evoTex(i,o.userData.baseMap);o.material.needsUpdate=true}})}
-const ASSETV='64';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
+const ASSETV='69';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
   new THREE.TextureLoader().load(src,t=>{t.flipY=false;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;res(t)},undefined,()=>res(null))})}
 function dropTail(g,m){const w=g.attributes.uv2;if(!w)return g;g=g.clone();const p=g.attributes.position,B=m.TA;
   for(let i=0;i<p.count;i++){const k=w.getX(i);if(k<=0)continue;const x=p.getX(i),y=p.getY(i),z=p.getZ(i);p.setXYZ(i,x+(B[0]+(x-B[0])*.1-x)*k,y+(B[1]+(y-B[1])*.1-y)*k,z+(B[2]+(z-B[2])*.1-z)*k)}
@@ -1737,7 +1737,7 @@ function evolve(i,from,to){
 function killAura(){V.evoK=0;if(V.evoG){if(V.evoG.parent)V.evoG.parent.remove(V.evoG);V.evoG=null;V.evoW=null}if(V.aura){V.spin.remove(V.aura.g);V.aura=null}
   if(V.C&&(V.C.obj||V.C.root))(V.C.obj||V.C.root).traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive&&!o.userData.keep&&o.material.emissiveIntensity!==undefined&&o.userData.tint){o.material.emissive.setRGB(0,0,0);o.material.emissiveIntensity=0;o.userData.tint=0}})}
 function makeAura(i){killAura();const C=V.C;if(!C||!(C.obj||C.root))return;if(C.obj)makeEvo(i);const col=new THREE.Color(ECOL[ELEM[i]]||'#ffd23c');
-  (C.obj||C.root).traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive&&!o.userData.keep){o.material.emissive.copy(col);o.material.emissiveIntensity=.1;o.userData.tint=1}});
+  if(!(C.m&&C.m.evoM))(C.obj||C.root).traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive&&!o.userData.keep){o.material.emissive.copy(col);o.material.emissiveIntensity=.1;o.userData.tint=1}});// modelo evoluído (Tripo) já tem as cores certas: o brilho por cima lavava as cores
   const g=new THREE.Group(),R0=Math.max(V.size.xz*.62,.7),sp=[];
   const mat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
   for(let k=0;k<22;k++){const m=new THREE.Mesh(new THREE.OctahedronGeometry(.035+Math.random()*.03,0),mat);g.add(m);sp.push({m,a:Math.random()*6.28,r:R0*(.85+Math.random()*.4),s:(.5+Math.random())*(k%2?1:-1)*.7,h:Math.random(),v:.18+Math.random()*.3})}

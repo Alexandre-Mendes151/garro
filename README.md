@@ -55,6 +55,18 @@ Um único arquivo HTML, sem instalação. Usa Matter.js (física) e Three.js (3D
 - **A lista de missões não vai para o banco:** a `sync-estado` lê o `data/missoes.json` publicado no site (`MISSOES_URL`, cache de 5 min) e passa meta e prêmio para o banco conferir. Mudar uma missão = editar o JSON.
 - Sem login: progresso e prêmios ficam no aparelho.
 
+### Aventura (migração 0009)
+- Aba **🗺️ Aventura** ao lado de Máquina/Gigante. Mundo 1, **Floresta Encantada**: 10 fases num caminho; cada fase libera a próxima.
+- **Cada fase é um jogo de plataforma (estilo Mário):** o bichinho escolhido corre até a bandeira, pula buracos e espinhos, **se abaixa** para passar sob as copas baixas, **pula na cabeça** dos bichinhos selvagens e solta o **Poder** do elemento (de longe, com recarga). Blocos **?** soltam morangos 🍓 que recuperam vida; bandeirinhas no meio guardam o ponto de volta se cair num buraco. A fase 10 termina numa arena com o **chefão** (Sylvorn Imperial gigante, Nv 25), que pula e atira; a bandeira só abre depois de vencê-lo.
+- **3 folhas douradas 🍃 por fase** = as estrelas (não dão moedas).
+- **O nível manda:** ataque, defesa e vida crescem com o nível (7% por nível); vantagem de elemento ×1,3. Os inimigos (com o Nv em cima da cabeça) vão do Nv 1 ao Nv 25. Cada fase pede um nível mínimo (inimigo mais forte − 6) para começar; o servidor confere o mesmo.
+- **Prêmios (poucos):** 1 🪙 na 1ª vitória de cada fase e 3 🪙 no chefão (12 🪙 no mundo todo). Repetir dá só XP (+8 vitória, +2 derrota). O chefão tem 5% de chance de soltar uma pedra de evolução (sorteio no servidor).
+- **Energia:** jogar não custa moedas, mas cada fase gasta 1 ⚡ do bichinho (máx. 5). Volta 1 ⚡ por hora, ou descansar enche na hora por 10 🪙.
+- **Controles:** no celular, ◀ ▶ à esquerda e Abaixar, Poder e Pular à direita; no computador, setas/WASD, espaço para pular e X para o Poder.
+- Conteúdo em `data/aventura.json`: o **mapa de cada fase** (texto: `#` chão, `B` caixa, `?` bloco com morango, `=` tronco, `T` copa baixa, `^` espinhos, `E` inimigo, `K` chefão, `X` portão do chefão, `L` folha, `S` morango, `C` bandeira de controle, `G` chegada, `P` início), inimigos, níveis, prêmios e os números da física e da luta. Os mapas foram gerados por um script e podem ser editados à mão. Código em `js/aventura.js`.
+- **Banco (só estado):** `adventure_progress` (fases vencidas, estrelas), `adventure_energy` (energia por bichinho) e `adventure_run` (partida em andamento). A `sync-estado` lê o `data/aventura.json` publicado (`AVENTURA_URL`, cache de 5 min): `adv_start` confere fase anterior e gasta energia; `adv_end` só aceita vitória de partida começada, com pelo menos 10 s e com o bichinho no nível mínimo da fase; `adv_rest` cobra o descanso.
+- Sem login: progresso e energia ficam no aparelho.
+
 ### Pelúcias derivadas (textura dos modelos de referência)
 - `models/deer_base.glb`: corpo do Sylvorn sem chifres nem orelhas. Serve de molde para Flarion, Umbros, Voltik, Lunaris, Lumina e Auren, cada um com a pele pintada em `models/skins/<n>.jpg` e as partes próprias (orelhas, asas, cauda...).
 - `models/tex/fur.jpg` e `models/tex/scale.jpg`: pelagem e escamas tiradas do Sylvorn e do Terranox, aplicadas nas outras pelúcias 3D.

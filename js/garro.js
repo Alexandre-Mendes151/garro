@@ -975,7 +975,7 @@ function evoTex(i,map){if(EVT[i])return EVT[i];const img=map.image;if(!img||!img
     d[p]=Math.max(0,Math.min(255,r*255));d[p+1]=Math.max(0,Math.min(255,g*255));d[p+2]=Math.max(0,Math.min(255,b*255))}
   x.putImageData(D,0,0);const t=new THREE.CanvasTexture(cv);t.flipY=map.flipY;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.wrapS=map.wrapS;t.wrapT=map.wrapT;return EVT[i]=t}
 function applyEvoTex(i){const C=V.C;if(!C||!C.obj)return;C.obj.traverse(o=>{if(o.isMesh&&!o.userData.keep&&o.userData.baseMap){o.material.map=evoTex(i,o.userData.baseMap);o.material.needsUpdate=true}})}
-const ASSETV='72';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
+const ASSETV='74';function loadSkin(f){if(SKIN[f])return SKIN[f];return SKIN[f]=new Promise(res=>{const src=GLBDATA[f]?'data:image/jpeg;base64,'+GLBDATA[f]:f+'?v='+ASSETV;
   new THREE.TextureLoader().load(src,t=>{t.flipY=false;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;res(t)},undefined,()=>res(null))})}
 function dropTail(g,m){const w=g.attributes.uv2;if(!w)return g;g=g.clone();const p=g.attributes.position,B=m.TA;
   for(let i=0;i<p.count;i++){const k=w.getX(i);if(k<=0)continue;const x=p.getX(i),y=p.getY(i),z=p.getZ(i);p.setXYZ(i,x+(B[0]+(x-B[0])*.1-x)*k,y+(B[1]+(y-B[1])*.1-y)*k,z+(B[2]+(z-B[2])*.1-z)*k)}
@@ -2087,7 +2087,12 @@ function openFox(i,pop){
 window.GARRO={
   online:()=>ONL&&!DEV,sb:()=>sb,sync:(a,x)=>syncEstado(a,x),
   coins:()=>coins,setCoins:n=>{coins=n;hud()},addCoinsLocal:n=>{coins+=n;bonus+=n;saveBonus();hud()},
-  coll:()=>coll,lvOf:i=>lvOf(i),CH0,banner:(t,s,w)=>banner(t,s,w),fanfare:()=>fanfare(),click:f=>{audio();click(f||600)}
+  coll:()=>coll,lvOf:i=>lvOf(i),CH0,banner:(t,s,w)=>banner(t,s,w),fanfare:()=>fanfare(),click:f=>{audio();click(f||600)},
+  // usados pela Aventura (js/aventura.js)
+  name:i=>PLUSH[i].name,evName:i=>evName(i,1),sprite:(i,lv,giant)=>bSrc({i,lv,giant:giant?1:0}),EVO_LV,
+  xpLocal:(i,n)=>gainXp(i,n),xpSet:(i,x)=>{careOf(i).xp=x;saveCare()},
+  stoneLocal:k=>{INV.st[k]=(INV.st[k]||0)+1;saveInv()},stone:k=>STONES[k],
+  tone:(f,d,t,v)=>{audio();tone(f,d,t,v)},evento:(k,n)=>evento(k,n),hint:t=>{$('hint').textContent=t}
 };
 window.dispatchEvent(new Event('garro:pronto'));
 renderShelf();hud();

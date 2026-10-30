@@ -151,7 +151,7 @@ function montar(){const R=RUN,f=R.f,M=f.mapa;const H=M.length,W=Math.max(...M.ma
   const h=R.hero;R.w=W_;R.leaves=0;R.t=0;R.cpx=W_.ini.x;R.cpy=W_.ini.y;
   const Z=R.i>=G.CH0?PF.heroi_redondo:PF.heroi_grande;
   R.p={x:W_.ini.x+2,y:W_.ini.y+TS-Z.h,w:Z.w,h:Z.h,hN:Z.h,hA:Z.agachado,s:Z.desenho,vx:0,vy:0,chao:false,face:1,inv:0,cd:0,coyote:0,buf:0,ag:false,cai:0,anda:0,venceu:0};R.camY=null;
-  h.hp=h.max;hud();folhas();tamanho()}
+  h.hp=h.max;hud();folhas();tamanho();preparaAndar()}
 function inimigo(j,lv,x,yPe,chefe){const L_=lutador(j,lv,{chefe});const k=chefe?PF.chefe_vida:PF.inimigo_vida;L_.hp=L_.max=Math.max(8,Math.round(L_.hp*k));
   const s=chefe?PF.tam_chefe:j>=G.CH0?PF.tam_redondo:PF.tam_grande;return Object.assign(L_,{j,lv,x:x+(TS-s)/2,y:yPe-s,w:s,h:s,vx:-(PF.inimigo_vel||38)*(chefe?1.2:1),vy:0,chao:false,vivo:true,ativo:false,pisca:0,salto:1+Math.random()*2,tiro:2.5,chefe:!!chefe,src:chefe?G.sprite(j,G.EVO_LV,1):G.sprite(j,lv),morre:0,face:-1})}
 function tamanho(){const cv=$('advCv');if(!cv)return;const r=cv.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
@@ -274,38 +274,15 @@ function desistir(){const R=RUN;if(!R||(R.fim&&!R.fimPend)){mapa();return}if(R.f
   if(!R.quit){R.quit=1;aviso('Toque de novo em ‹ para desistir (conta como derrota).',2500);setTimeout(()=>{if(RUN===R)R.quit=0},2600);return}
   R.fim=true;R.fimPend=1;terminar(false)}
 
-// ---- pernas: cada figura é separada em corpo + pernas (achadas pelo contorno de baixo) para as pernas andarem ----
-const PERNA={};
-function pernas(src,mini){const k=src;if(PERNA[k])return PERNA[k];const im=img(src);if(!im.complete||!im.naturalWidth)return null;
-  const W=im.naturalWidth,H=im.naturalHeight,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.drawImage(im,0,0);
-  let d;try{d=x.getImageData(0,0,W,H).data}catch(e){return PERNA[k]={c,W,H,hip:H,legs:[]}}
-  const b=new Int32Array(W).fill(-1);let y0=H,y1=0;
-  for(let X=0;X<W;X++)for(let Y=H-1;Y>=0;Y--)if(d[(Y*W+X)*4+3]>60){b[X]=Y;if(Y>y1)y1=Y;break}
-  for(let Y=0;Y<H&&y0===H;Y++)for(let X=0;X<W;X++)if(d[(Y*W+X)*4+3]>60){y0=Y;break}
-  const h=y1-y0+1;let legs=[],hip;
-  if(mini){// redondos: dois pezinhos na parte de baixo
-    hip=Math.round(y1-h*.13);let xs=[];for(let X=0;X<W;X++)if(b[X]>=y1-h*.05)xs.push(X);
-    if(xs.length){const a=xs[0],z=xs[xs.length-1],m=(a+z)>>1;legs=[[a,m],[m+1,z]]}}
-  else{const low=X=>b[X]>=y1-h*.10;let g=[],st=-1;
-    for(let X=0;X<=W;X++){const v=X<W&&low(X);if(v&&st<0)st=X;if(!v&&st>=0){g.push([st,X-1]);st=-1}}
-    const m=[];for(const q of g){if(m.length&&q[0]-m[m.length-1][1]<=Math.max(2,W*.02))m[m.length-1][1]=q[1];else m.push(q)}
-    for(const q of m){if(q[1]-q[0]<Math.max(3,W*.04))continue;if(q[1]-q[0]>W*.2){const md=(q[0]+q[1])>>1;legs.push([q[0],md],[md+1,q[1]])}else legs.push(q)}
-    const bel=[];for(let X=0;X<W;X++)if(b[X]>=0&&!low(X))bel.push(b[X]);bel.sort((u,v)=>u-v);
-    hip=bel.length?bel[bel.length>>1]:y1-h*.25;hip=Math.round(Math.min(Math.max(hip,y1-h*.38),y1-h*.15))}
-  return PERNA[k]={c,W,H,hip,legs,y1}}
-// desenha o bichinho com os pés em (0,0) já transladado; s = altura em px do jogo; fase = passo; anda/ar = estado
-function bicho(x,src,mini,s,fase,anda,ar){const P=pernas(src,mini),im=img(src);if(!im.complete||!im.naturalWidth)return;
-  const ar_=im.naturalWidth/im.naturalHeight,w=s*ar_,k=s/im.naturalHeight;
-  if(!P||!P.legs.length){x.drawImage(im,-w/2,-s,w,s);return}
-  const hy=P.hip*k-s,ov=2.5;
-  // corpo: tudo acima do quadril + o que fica abaixo dele fora das pernas
-  x.save();x.beginPath();x.rect(-w/2,-s,w,hy+s+ov);let px=0;
-  for(const [a,z] of P.legs){if(a*k>px)x.rect(-w/2+px,hy+ov,a*k-px,s);px=(z+1)*k}x.rect(-w/2+px,hy+ov,w-px,s);x.clip();x.drawImage(P.c,-w/2,-s,w,s);x.restore();
-  // pernas: giram no quadril, alternando (uma vai, a outra volta)
-  P.legs.forEach(([a,z],n)=>{const ph=fase*Math.PI*2+(n%2?Math.PI:0);let ang=0,lift=0;
-    if(ar)ang=(n%2?-1:1)*.35;else if(anda){ang=Math.sin(ph)*.38;lift=Math.max(0,Math.cos(ph))*s*.035}
-    const lx=-w/2+a*k,lw=(z-a+1)*k,cx=lx+lw/2;x.save();x.translate(cx,hy);x.rotate(ang);x.translate(0,-lift);
-    x.drawImage(P.c,a,P.hip-ov/k,z-a+1,P.H-P.hip+ov/k,-lw/2,-ov,lw,(P.H-P.hip)*k+ov);x.restore()})}
+// ---- caminhada: 8 quadros por bichinho, fotografados do modelo 3D com as pernas se mexendo (img/andar/<id>[e].webp) ----
+const ANDAR={},NQ=(PF.andar&&PF.andar.quadros)||8;
+function andarDe(i,evo){const k=i+(evo?'e':'');if(ANDAR[k]!==undefined)return ANDAR[k];ANDAR[k]=null;
+  const im=new Image();im.onload=()=>{ANDAR[k]=im};im.onerror=()=>{ANDAR[k]=false};im.src='img/andar/'+k+'.webp?v='+((PF.andar&&PF.andar.v)||1);return null}
+// desenha o bichinho com os pés em (0,0); s = altura; fase = posição no passo (0..1 repete); anda/ar = estado
+function bicho(x,i,evo,src,s,fase,anda,ar){const A=andarDe(i,evo);
+  if(A){const fw=A.naturalWidth/NQ,fh=A.naturalHeight,q=anda?Math.floor(((fase%1)+1)%1*NQ)%NQ:ar?2:0,w=s*fw/fh;x.drawImage(A,q*fw,0,fw,fh,-w/2,-s,w,s);return}
+  const im=img(src);if(im.complete&&im.naturalWidth){const w=s*im.naturalWidth/im.naturalHeight;x.drawImage(im,-w/2,-s,w,s)}}
+function preparaAndar(){const R=RUN;andarDe(R.i,R.i<G.CH0&&R.hero.lv>=G.EVO_LV);for(const e of R.w.ents)andarDe(e.j,e.chefe)}
 
 // ---- desenho ----
 const TIL={};
@@ -347,7 +324,7 @@ function desenha(){const R=RUN,cv=$('advCv');if(!cv||!R.w)return;const x=cv.getC
   // inimigos
   for(const e of w.ents){if(!e.ativo&&e.vivo)continue;if(!e.vivo&&e.morre>.5)continue;const im=img(e.src);x.save();
     const a=e.vivo?1:1-e.morre*2;x.globalAlpha=Math.max(0,a);x.translate(e.x+e.w/2,e.y+e.h);if(!e.vivo)x.rotate(e.morre*3);x.scale(e.face>0?1:-1,1);
-    if(e.pisca>0)x.filter='brightness(2.2)';e.passo=(e.passo||Math.random())+Math.abs(e.vx)/60/22;bicho(x,e.src,e.j>=G.CH0,e.w*1.35,e.passo,e.vivo&&e.chao&&Math.abs(e.vx)>4,e.vivo&&!e.chao);x.restore();
+    if(e.pisca>0)x.filter='brightness(2.2)';e.passo=(e.passo||Math.random())+Math.abs(e.vx)/60/(e.chefe?60:40);bicho(x,e.j,e.chefe,e.src,e.w*1.35,e.passo,e.vivo&&e.chao&&Math.abs(e.vx)>4,e.vivo&&!e.chao);x.restore();
     if(e.vivo&&!e.chefe&&e.hp<e.max){x.fillStyle='rgba(0,0,0,.55)';x.fillRect(e.x-2,e.y-12,e.w+4,5);x.fillStyle='#ff6a5a';x.fillRect(e.x-1,e.y-11,(e.w+2)*e.hp/e.max,3)}
     if(e.vivo&&!e.chefe){x.font='bold 7px system-ui';x.fillStyle='#fff';x.strokeStyle='rgba(0,0,0,.7)';x.lineWidth=2;x.strokeText('Nv '+e.lv,e.x+e.w/2,e.y-17);x.fillText('Nv '+e.lv,e.x+e.w/2,e.y-17)}
     if(e.vivo&&e.chefe){x.font='16px system-ui';x.fillText('👑',e.x+e.w/2,e.y-e.h*.45)}}
@@ -355,7 +332,7 @@ function desenha(){const R=RUN,cv=$('advCv');if(!cv||!R.w)return;const x=cv.getC
   if(!(p.inv>0&&Math.floor(p.inv*14)%2)){const im=img(G.sprite(RUN.i,RUN.hero.lv));x.save();x.translate(p.x+p.w/2,p.y+p.h);x.scale(p.face,1);
     const s=p.s;
     if(p.morto){x.rotate(Math.PI);x.translate(0,s*.6)}
-    if(p.ag){x.scale(1.06,.8)}x.translate(0,p.chao&&Math.abs(p.vx)>10?-Math.abs(Math.sin(p.anda*Math.PI))*1.5:0);bicho(x,G.sprite(RUN.i,RUN.hero.lv),RUN.i>=G.CH0,s,p.anda/2,p.chao&&Math.abs(p.vx)>10,!p.chao);x.restore()}
+    if(p.ag){x.scale(1.06,.8)}x.translate(0,p.chao&&Math.abs(p.vx)>10?-Math.abs(Math.sin(p.anda*Math.PI))*1.5:0);bicho(x,RUN.i,RUN.i<G.CH0&&RUN.hero.lv>=G.EVO_LV,G.sprite(RUN.i,RUN.hero.lv),s,p.anda/3.2,p.chao&&Math.abs(p.vx)>10,!p.chao);x.restore()}
   // tiros e partículas
   for(const t of w.tiros){x.save();x.translate(t.x,t.y);x.rotate(R.t*10);x.shadowColor=t.c;x.shadowBlur=8;x.font=(t.meu?16:20)+'px system-ui';x.fillText(t.e,0,0);x.restore()}
   for(const q of w.parts){x.globalAlpha=Math.max(0,q.t*2);x.fillStyle=q.c;x.fillRect(q.x-1.5,q.y-1.5,3,3)}x.globalAlpha=1;
@@ -384,6 +361,6 @@ function resultado(win,st,res){const R=RUN,f=R.f,tem=FASES[R.k+1];if(win)G.fanfa
   h+='</ul><div class="advresb">'+(win&&tem?'<button type="button" data-r="prox">Próxima fase ›</button>':'')+'<button type="button" data-r="de-novo">'+(win?'Jogar de novo':'Tentar de novo')+'</button><button type="button" data-r="mapa" class="sec">Mapa</button></div></div>';
   const d=document.createElement('div');d.innerHTML=h;$('advScene').appendChild(d.firstChild);moedas()}
 
-window.GARRO_AVENTURA={FASES,lutador,dano,elemMult,energia,liberada,box,recomendado,nivelMin,run:()=>RUN,cel:(c,r)=>cel(c,r),TS,bicho:(x,src,mini,s,f,a,ar)=>bicho(x,src,mini,s,f,a,ar),pernas,tec:(k,v)=>{TEC[k]=v;if(v&&k==='J')TEC.Jp=true;if(v&&k==='F')TEC.Fp=true},sim:(n,bot)=>{for(let k=0;k<n&&RUN&&!RUN.fim;k++){if(bot)bot();fisica(1/60)}if(RUN&&RUN.w)desenha()}};// usado nos testes
+window.GARRO_AVENTURA={FASES,lutador,dano,elemMult,energia,liberada,box,recomendado,nivelMin,run:()=>RUN,cel:(c,r)=>cel(c,r),TS,andarDe,tec:(k,v)=>{TEC[k]=v;if(v&&k==='J')TEC.Jp=true;if(v&&k==='F')TEC.Fp=true},sim:(n,bot)=>{for(let k=0;k<n&&RUN&&!RUN.fim;k++){if(bot)bot();fisica(1/60)}if(RUN&&RUN.w)desenha()}};// usado nos testes
 setTimeout(carregarServidor,3000);
 })();

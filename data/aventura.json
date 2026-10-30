@@ -491,6 +491,10 @@
   },
   "tam_grande": 38,
   "tam_redondo": 26,
-  "tam_chefe": 84
+  "tam_chefe": 84,
+  "andar": {
+   "quadros": 8,
+   "v": 1
+  }
  }
 }

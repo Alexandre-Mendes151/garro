@@ -993,6 +993,20 @@ function attachParts(obj,i,m){const sp0=SPEC[i],sp=Object.assign({},sp0,{x:sp0.x
   if(m.notail){const t=C.tail;t.position.set(m.TA[0]-m.tp[0],m.TA[1]-m.tp[1],m.TA[2]-m.tp[2]);t.scale.multiplyScalar(kB*1.15*(m.ts||1));tpG.add(t)}
   const wings=(C.wings||[]).map(w=>({w,z:w.rotation.z,s:Math.sign(w.position.x)||1}));
   return{hpG,tpG,wings,segs:C.segs||[]}}
+// modelo 3D pronto para outras telas (Aventura): grandes = GLB (o evoluído quando houver), redondos = montados em código.
+// Volta um grupo com altura 1, pés em y=0 e olhando para +z. Não mexe no visualizador.
+async function montaModelo(i,evo){
+  if(i>=CH0){const C=buildChibi(CH[i-CH0],2),g=new THREE.Group();g.add(C.root);C.root.updateMatrixWorld(true);
+    const b=new THREE.Box3().setFromObject(C.root),h=b.max.y-b.min.y||1;C.root.scale.setScalar(1/h);C.root.position.y=-b.min.y/h;return g}
+  const m0=MODELS[i];if(!m0)throw new Error('sem modelo '+i);
+  let m=evo&&EVOFILE[i]&&!EVOFAIL[i]?Object.assign({},m0,NBE[i]||{},{file:EVOFILE[i],skin:null,key:m0.key+'E',remote:1,evoM:1,wing:null,notail:false,noDeform:1}):m0;
+  let src;try{src=await loadGLB(m)}catch(e){if(m===m0)throw e;m=m0;src=await loadGLB(m)}
+  const obj=src.clone(true),skin=m.skin?await loadSkin(m.skin):null;
+  obj.traverse(o=>{if(o.isMesh){if(m.notail)o.geometry=dropTail(o.geometry,m);if(!o.geometry.attributes.normal)weldNormals(o.geometry);
+    const mm=o.material.clone();if(skin)mm.map=skin;if(mm.map)mm.map.encoding=THREE.sRGBEncoding;mm.roughness=.92;mm.metalness=0;o.material=mm}});
+  if(!m.evoM){try{if(m.HC)attachParts(obj,i,m);else attachExtras(obj,i,m)}catch(e){}}
+  obj.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(obj),h=b.max.y-b.min.y||1,g=new THREE.Group();
+  obj.scale.setScalar(1/h);obj.position.set(-(b.min.x+b.max.x)/2/h,-b.min.y/h,-(b.min.z+b.max.z)/2/h);g.add(obj);return g}
 // tira da cena qualquer modelo que tenha ficado de uma abertura anterior (evita dois bichinhos na tela)
 function tiraModelos(){if(!V.spin)return;for(const c of V.spin.children.slice())if(c.userData.modelo)V.spin.remove(c)}
 async function openGLB(i){setDet(i);const tok=V.abre=(V.abre||0)+1;// se abrir de novo antes de terminar, só o último vale
@@ -2093,6 +2107,7 @@ window.GARRO={
   coins:()=>coins,setCoins:n=>{coins=n;hud()},addCoinsLocal:n=>{coins+=n;bonus+=n;saveBonus();hud()},
   coll:()=>coll,lvOf:i=>lvOf(i),CH0,banner:(t,s,w)=>banner(t,s,w),fanfare:()=>fanfare(),click:f=>{audio();click(f||600)},
   // usados pela Aventura (js/aventura.js)
+  modelo:(i,evo)=>montaModelo(i,evo),THREE:()=>window.THREE,
   name:i=>PLUSH[i].name,evName:i=>evName(i,1),sprite:(i,lv,giant)=>bSrc({i,lv,giant:giant?1:0}),EVO_LV,
   xpLocal:(i,n)=>gainXp(i,n),xpSet:(i,x)=>{careOf(i).xp=x;saveCare()},
   stoneLocal:k=>{INV.st[k]=(INV.st[k]||0)+1;saveInv()},stone:k=>STONES[k],

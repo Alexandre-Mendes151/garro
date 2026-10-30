@@ -1,4 +1,4 @@
-# Fotografa o ciclo de caminhada (8 quadros) de cada bichinho para img/andar/: as pernas são mexidas no modelo 3D do visualizador
+# Fotografa o ciclo de caminhada (8 quadros + 1 parado no fim) de cada bichinho para img/andar/: as pernas são mexidas no modelo 3D do visualizador
 # (deformação suave, sem recorte). Roda com o jogo aberto num navegador headless (ganchos de teste). Uso: ids  evoluído(0/1)  pasta  [rotações]
 import asyncio,base64,io,json,sys,os
 sys.path.insert(0,'/home/claude/h')
@@ -31,9 +31,11 @@ JS=r'''(args)=>{const [f,NF,AMP,ry,mini]=args;const V=VV(),T=TT().THREE;
   for(let k=0;k<p.count;k++){const x=m.S[k*3],y=m.S[k*3+1],z=m.S[k*3+2];
    const wy=sm(D.hip,D.hip-(D.hip-D.mn.y)*.55,y);if(wy<=0){p.setXYZ(k,m.orig[k*3],m.orig[k*3+1],m.orig[k*3+2]);continue}
    const s=sm(D.xm-D.dx,D.xm+D.dx,x)*2-1,fr=sm(D.zm-D.dz,D.zm+D.dz,z),fb=fr*2-1;
-   const th=AMP*Math.sin(ph)*s*fb*wy,zc=D.zB+(D.zF-D.zB)*fr,dy=y-D.hip,dz=z-zc,c=Math.cos(th),sn=Math.sin(th);
-   const lift=Math.max(0,Math.cos(ph)*s*fb)*D.H*.05*wy;
-   v.set(x,D.hip+dy*c-dz*sn+lift,zc+dy*sn+dz*c).applyMatrix4(m.Mi);p.setXYZ(k,v.x,v.y,v.z)}
+   // passo por cisalhamento: o pé desliza para frente/trás sem subir (a pata de apoio fica no chão);
+   // só a pata que está indo para frente levanta. f===NF é a pose parada (sem mexer nada).
+   const g=s*fb,par=f>=NF,sw=par?0:Math.sin(ph)*g,dz=(D.hip-y)*Math.tan(AMP)*sw*wy;
+   const lift=par?0:Math.max(0,Math.cos(ph)*g)*D.H*.06*wy*wy;
+   v.set(x,y+lift,z+dz).applyMatrix4(m.Mi);p.setXYZ(k,v.x,v.y,v.z)}
   p.needsUpdate=true}
  for(const [o,pp,rr,ss] of D.poses){o.position.copy(pp);o.rotation.copy(rr);o.scale.copy(ss)}
  if(V.C.lids)V.C.lids.forEach(l=>l.rotation.x=V.C.lidOpen);
@@ -48,7 +50,7 @@ async def main():
       await pg.evaluate(f"(()=>{{const X=CHX();X.coll[{i}]=1;X.CARE[{i}]={{xp:{9999 if EV else 5},f:50,l:50,p:50,t:Date.now()+1e9}}}})()")
       await pg.evaluate(f'window.__D=null;openViewer({i})');await pg.wait_for_timeout(3500)
       fr=[]
-      for f in range(NF):
+      for f in range(NF+1):
         d=await pg.evaluate(JS,[f,NF,AMP*(0.6 if i>=20 else 1),RY.get(i,1.0),i>=20]);fr.append(Image.open(io.BytesIO(base64.b64decode(d.split(',')[1]))).convert('RGBA'))
       # restaura a geometria original (é compartilhada com o cache)
       await pg.evaluate("(()=>{const D=window.__D;if(D)for(const m of D.ms){m.o.geometry.attributes.position.array.set(m.orig);m.o.geometry.attributes.position.needsUpdate=true}})()")
@@ -61,8 +63,9 @@ async def main():
       for im in fr:
         al2=np.array(im)[...,3]>40;ys2=np.where(al2.any(1))[0];d=(im.height-2)-(ys2[-1] if len(ys2) else im.height-2)
         z=Image.new('RGBA',im.size);z.paste(im,(0,d),im);fr2.append(z)
-      fr=fr2W,H=fr[0].size;sc=128/max(W,H);w,h=round(W*sc),round(H*sc)
-      strip=Image.new('RGBA',(w*NF,h))
+      fr=fr2
+      W,H=fr[0].size;sc=128/max(W,H);w,h=round(W*sc),round(H*sc)
+      strip=Image.new('RGBA',(w*(NF+1),h))
       for k,im in enumerate(fr):strip.paste(im.resize((w,h),Image.LANCZOS),(k*w,0))
       name=f'{OUT}/{i}{"e" if EV else ""}.webp';strip.save(name,'WEBP',quality=76,method=6);print(i,w,h,os.path.getsize(name),flush=True)
       await pg.evaluate("document.getElementById('vClose').click()");await pg.wait_for_timeout(200)

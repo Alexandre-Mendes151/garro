@@ -494,7 +494,8 @@
   "tam_chefe": 84,
   "andar": {
    "quadros": 8,
-   "v": 2
+   "parado": true,
+   "v": 3
   }
  }
 }

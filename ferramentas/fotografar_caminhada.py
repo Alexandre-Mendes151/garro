@@ -55,7 +55,13 @@ async def main():
       al=np.zeros(fr[0].size[::-1],bool)
       for im in fr:al|=np.array(im)[...,3]>20
       ys,xs=np.where(al);x0,x1,y0,y1=xs.min()-3,xs.max()+4,ys.min()-3,ys.max()+4
-      fr=[im.crop((x0,y0,x1,y1)) for im in fr];W,H=fr[0].size;sc=128/max(W,H);w,h=round(W*sc),round(H*sc)
+      fr=[im.crop((x0,y0,x1,y1)) for im in fr];
+      # cada quadro desce até a pata mais baixa encostar no chão (senão ele parece voar durante o passo)
+      fr2=[]
+      for im in fr:
+        al2=np.array(im)[...,3]>40;ys2=np.where(al2.any(1))[0];d=(im.height-2)-(ys2[-1] if len(ys2) else im.height-2)
+        z=Image.new('RGBA',im.size);z.paste(im,(0,d),im);fr2.append(z)
+      fr=fr2W,H=fr[0].size;sc=128/max(W,H);w,h=round(W*sc),round(H*sc)
       strip=Image.new('RGBA',(w*NF,h))
       for k,im in enumerate(fr):strip.paste(im.resize((w,h),Image.LANCZOS),(k*w,0))
       name=f'{OUT}/{i}{"e" if EV else ""}.webp';strip.save(name,'WEBP',quality=76,method=6);print(i,w,h,os.path.getsize(name),flush=True)

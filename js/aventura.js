@@ -332,7 +332,7 @@ function desenha(){const R=RUN,cv=$('advCv');if(!cv||!R.w)return;const x=cv.getC
   if(!(p.inv>0&&Math.floor(p.inv*14)%2)){const im=img(G.sprite(RUN.i,RUN.hero.lv));x.save();x.translate(p.x+p.w/2,p.y+p.h);x.scale(p.face,1);
     const s=p.s;
     if(p.morto){x.rotate(Math.PI);x.translate(0,s*.6)}
-    if(p.ag){x.scale(1.06,.8)}x.translate(0,p.chao&&Math.abs(p.vx)>10?-Math.abs(Math.sin(p.anda*Math.PI))*1.5:0);bicho(x,RUN.i,RUN.i<G.CH0&&RUN.hero.lv>=G.EVO_LV,G.sprite(RUN.i,RUN.hero.lv),s,p.anda/3.2,p.chao&&Math.abs(p.vx)>10,!p.chao);x.restore()}
+    if(p.ag){x.scale(1.06,.8)}bicho(x,RUN.i,RUN.i<G.CH0&&RUN.hero.lv>=G.EVO_LV,G.sprite(RUN.i,RUN.hero.lv),s,p.anda/3.2,p.chao&&Math.abs(p.vx)>10,!p.chao);x.restore()}
   // tiros e partículas
   for(const t of w.tiros){x.save();x.translate(t.x,t.y);x.rotate(R.t*10);x.shadowColor=t.c;x.shadowBlur=8;x.font=(t.meu?16:20)+'px system-ui';x.fillText(t.e,0,0);x.restore()}
   for(const q of w.parts){x.globalAlpha=Math.max(0,q.t*2);x.fillStyle=q.c;x.fillRect(q.x-1.5,q.y-1.5,3,3)}x.globalAlpha=1;

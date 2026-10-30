@@ -49,7 +49,7 @@ def gera(n,ninim,boss=False,seed=0):
     elif s=='duck':
       w=rnd.randint(3,5);k=w+8;flat(k,g);a=c0+3
       for c in range(a,a+w):
-        for r in range(1,g-1):put(r,c,'T')
+        for r in range(1,g-2):put(r,c,'T')   # 2 blocos de vão: o bichinho gigante passa abaixado
       if len(folhas)<3 and rnd.random()<.6:folhas.append((g-1,a+w//2))
     elif s=='thorn':
       k=rnd.randint(7,9);flat(k,g);w=rnd.randint(1,2)
@@ -84,7 +84,7 @@ def gera(n,ninim,boss=False,seed=0):
   for c in range(14,W-14):
     t=cols[c]
     if t is None or any(cols[c+d]!=t for d in (-2,-1,1,2)):continue
-    if any(rows[r][c]!=' ' for r in range(t-2,t)) or any(rows[r][c]=='T' for r in range(0,t)):continue
+    if any(rows[r][c]!=' ' for r in range(t-3,t)) or any(rows[r][c]=='T' for r in range(0,t)):continue
     cand.append(c)
   rnd.shuffle(cand);usados=[]
   for c in cand:
